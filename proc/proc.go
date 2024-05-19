@@ -22,7 +22,8 @@ func Root() iface.IProcess {
 	return root
 }
 
-type process struct{}
+type process struct {
+}
 
 func RegisterHook(status int, h func() error) {
 	if status < StatusAfterInit || status > StatusBeforeExit {

@@ -2,6 +2,7 @@ package message
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/tnnmigga/corev2/conf"
 	"github.com/tnnmigga/corev2/iface"
@@ -58,4 +59,11 @@ type toLocal struct{}
 
 func (b toLocal) String() string {
 	return "local"
+}
+
+func castLocal(msg any) {
+	mType := reflect.TypeOf(msg)
+	for _, m := range recvers[mType] {
+		m.Assign(msg)
+	}
 }
