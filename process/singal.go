@@ -1,4 +1,4 @@
-package proc
+package process
 
 import (
 	"context"
@@ -53,7 +53,7 @@ func WaitExitSignal() os.Signal {
 }
 
 // 运行时故障触发进程退出流程
-func Exit() {
+func Abort() {
 	select {
 	case sign <- syscall.SIGQUIT:
 	default:

@@ -1,4 +1,4 @@
-package reactor
+package module
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/tnnmigga/corev2/zlog"
 )
 
-func (m *module) RegisterHandle(mType reflect.Type, h func(any)) {
+func (m *module) RegisterHandler(mType reflect.Type, h func(any)) {
 	if _, ok := m.handles[mType]; ok {
 		panic(fmt.Errorf("duplicate registration %s", mType.String()))
 	}

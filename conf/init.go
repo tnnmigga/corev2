@@ -4,31 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"os"
 	"regexp"
-
-	"github.com/tnnmigga/corev2/proc"
 )
 
-func init() {
-	fname := proc.Argv.Str("-c", "configs.jsonc")
-	b := loadLocalFile(fname)
+func Init(b []byte) {
 	LoadFromJSON(b)
 	serverID = Int("server.id")
 	serverType = String("server.type")
-}
-
-func loadLocalFile(fname string) []byte {
-	file, err := os.OpenFile(fname, os.O_RDONLY, 0)
-	if err != nil {
-		panic(err)
-	}
-	b, err := io.ReadAll(file)
-	if err != nil {
-		panic(err)
-	}
-	return b
 }
 
 var (

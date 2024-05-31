@@ -1,4 +1,4 @@
-package reactor
+package module
 
 import (
 	"reflect"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/tnnmigga/corev2/conc"
 	"github.com/tnnmigga/corev2/iface"
-	"github.com/tnnmigga/corev2/proc"
 	"github.com/tnnmigga/corev2/utils"
 	"github.com/tnnmigga/corev2/zlog"
 )
@@ -20,7 +19,7 @@ type module struct {
 	rpcs    map[reflect.Type](func(iface.IRPC))
 }
 
-func New(name string, workerNum int, mqLen int) iface.IReactor {
+func New(name string, workerNum int, mqLen int) iface.IModule {
 	m := &module{
 		name:    name,
 		mq:      make(chan any, mqLen),
@@ -34,7 +33,6 @@ func New(name string, workerNum int, mqLen int) iface.IReactor {
 			}
 		})
 	}
-	proc.RegisterHook(proc.StatusAfterStop, m.afterStop)
 	modules = append(modules, m)
 	return m
 }

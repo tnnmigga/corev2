@@ -2,11 +2,8 @@ package iface
 
 import "reflect"
 
-type IProcess interface {
-}
-
-type IReactor interface {
-	RegisterHandle(mType reflect.Type, h func(any))
+type IModule interface {
+	RegisterHandler(mType reflect.Type, h func(any))
 	RegisterRPC(mType reflect.Type, rpc func(IRPC))
 	Assign(any)
 }

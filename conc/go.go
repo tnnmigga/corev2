@@ -6,7 +6,7 @@ import (
 
 	"github.com/tnnmigga/corev2/algorithm"
 	"github.com/tnnmigga/corev2/iface"
-	"github.com/tnnmigga/corev2/proc"
+	"github.com/tnnmigga/corev2/process"
 	"github.com/tnnmigga/corev2/utils"
 	"github.com/tnnmigga/corev2/zlog"
 )
@@ -93,21 +93,21 @@ func (w *worker) work() {
 func Go[T gocall](fn T) {
 	switch f := any(fn).(type) {
 	case func(context.Context):
-		proc.WaitAdd()
+		process.WaitAdd()
 		go func() {
 			// GoRunMark(utils.FuncName(fn))
 			// defer GoDoneMark(utils.FuncName(fn))
 			defer utils.RecoverPanic()
-			defer proc.WaitDone()
+			defer process.WaitDone()
 			f(rootCtx)
 		}()
 	case func():
-		proc.WaitAdd()
+		process.WaitAdd()
 		go func() {
 			// GoRunMark(utils.FuncName(fn))
 			// defer GoDoneMark(utils.FuncName(fn))
 			defer utils.RecoverPanic()
-			defer proc.WaitDone()
+			defer process.WaitDone()
 			f()
 		}()
 	}
@@ -135,7 +135,7 @@ func PrintCurrentGo() {
 	})
 }
 
-func Async[T any](m iface.IReactor, f func() (T, error), cb func(T, error)) {
+func Async[T any](m iface.IModule, f func() (T, error), cb func(T, error)) {
 	Go(func() {
 		defer utils.RecoverPanic()
 		c := &asyncCtx[T]{}
