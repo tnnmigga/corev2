@@ -3,25 +3,14 @@ package iface
 import "reflect"
 
 type IModule interface {
+	Name() string
 	RegisterHandler(mType reflect.Type, h func(any))
-	RegisterRPC(mType reflect.Type, rpc func(IRPC))
+	RegisterRPC(mType reflect.Type, rpc func(IRPCCtx))
 	Assign(any)
 }
 
-type IRPC interface {
+type IRPCCtx interface {
 	RPCBody() any
 	Return(any)
 	Error(error)
-}
-
-type IRPCCb interface {
-	RPCCb()
-}
-
-type IAsyncCtx interface {
-	AsyncCb()
-}
-
-type IMsgDest interface {
-	String() string
 }

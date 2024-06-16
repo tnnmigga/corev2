@@ -1,4 +1,4 @@
-package algorithm
+package heap
 
 import (
 	"golang.org/x/exp/constraints"
@@ -7,6 +7,10 @@ import (
 type heapItem[K comparable, V constraints.Ordered] interface {
 	Key() K
 	Value() V
+}
+
+func New[K comparable, V constraints.Ordered]() *Heap[K, V, heapItem[K, V]] {
+	return &Heap[K, V, heapItem[K, V]]{}
 }
 
 // 小顶堆

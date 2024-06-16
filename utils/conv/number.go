@@ -1,22 +1,11 @@
-package utils
+package conv
 
 import (
 	"fmt"
-	"reflect"
 	"strconv"
 
 	"golang.org/x/exp/constraints"
 )
-
-// 泛型和interface转换并去掉多层指针
-func New[T any]() any {
-	var value T
-	typeOf := reflect.TypeOf(value)
-	for typeOf.Kind() == reflect.Pointer {
-		typeOf = typeOf.Elem()
-	}
-	return reflect.New(typeOf).Interface()
-}
 
 // 将任意类型值转换为指定类型整型
 func Integer[T constraints.Integer](value any) T {

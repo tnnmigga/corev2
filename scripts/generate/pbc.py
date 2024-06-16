@@ -37,7 +37,7 @@ def gogoFile():
                 txt = txt[:index] + insertTxt() + txt[index:]
         with open(source + '/tmp/'+file.split('/')[-1], 'w') as f:
             f.write(txt)
-    os.system('protoc -I={}/tmp --proto_path=./{} --gofast_out=./{}/tmp {}/tmp/*.proto'.format(source, source, source, source))
+    os.system('protoc -I={}/tmp --proto_path=./{} --gofast_out=paths=source_relative:{}/tmp {}/tmp/*.proto'.format(source, source, source,source))
     os.system('mv {}/tmp/*.go {}/'.format(source, source))    
     os.system('rm -r {}/tmp'.format(source))
 
@@ -61,11 +61,12 @@ if __name__ == '__main__':
         key, value = arg.split("=")
         if key == "source":
             source = value
-        if key == "gogo":
+        if key == "gogopath":
             gogopath = value
     if source == '':
         print("path is empty")
         exit()
+    print(gogopath)
     if gogopath == '':
         gogopath = source
     gogoFile()

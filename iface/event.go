@@ -1,11 +1,12 @@
 package iface
 
 type IEventSubscriber interface {
+	IModule
 	Name() string
 	Subscribing() []string
-	Handler(any)
+	Handler(IEvent)
 }
 
 type IEvent interface {
-	GetType()
+	GetType() string
 }

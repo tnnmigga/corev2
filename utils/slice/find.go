@@ -1,4 +1,4 @@
-package utils
+package slice
 
 // 列表如果长度大于0, 返回第一个元素, 否则返回默认值
 func FirstOrDefault[T any](s []T, defaultVal T) T {

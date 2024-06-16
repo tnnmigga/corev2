@@ -3,6 +3,7 @@ module github.com/tnnmigga/corev2
 go 1.21.4
 
 require (
+	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.4
 	github.com/procodr/monkey v0.0.0-20221102224215-28eb53c3a645
@@ -16,4 +17,7 @@ require (
 	google.golang.org/protobuf v1.33.0 // indirect
 )
 
-require go.uber.org/multierr v1.10.0 // indirect
+require (
+	github.com/deckarep/golang-set v1.8.0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
+)

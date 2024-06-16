@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/tnnmigga/corev2/utils/stack"
 	"github.com/tnnmigga/corev2/zlog"
-	"github.com/tnnmigga/corev2/utils"
 
 	"github.com/gogo/protobuf/proto"
 	"go.mongodb.org/mongo-driver/bson"
@@ -44,8 +44,8 @@ func Register[T any](t ...T) {
 		t = append(t, tmp)
 	}
 	v := t[0]
-	name := utils.TypeName(v)
-	id := utils.TypeID(v)
+	name := stack.TypeName(v)
+	id := stack.TypeID(v)
 	if desc, has := msgIDToDesc[id]; has {
 		if desc.MessageName != name {
 			zlog.Panicf("msgid duplicat %v %d", name, id)
@@ -65,7 +65,7 @@ func Register[T any](t ...T) {
 // 编码
 // 额外拼接四字节类型id
 func Encode(v any) []byte {
-	msgID := utils.TypeID(v)
+	msgID := stack.TypeID(v)
 	bytes := Marshal(v)
 	body := make([]byte, 4, len(bytes)+4)
 	binary.LittleEndian.PutUint32(body, msgID)

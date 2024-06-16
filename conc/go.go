@@ -4,17 +4,17 @@ import (
 	"context"
 	"sync"
 
-	"github.com/tnnmigga/corev2/algorithm"
 	"github.com/tnnmigga/corev2/iface"
 	"github.com/tnnmigga/corev2/process"
-	"github.com/tnnmigga/corev2/utils"
+	"github.com/tnnmigga/corev2/utils/counter"
+	"github.com/tnnmigga/corev2/utils/stack"
 	"github.com/tnnmigga/corev2/zlog"
 )
 
 var (
 	rootCtx, cancelGo = context.WithCancel(context.Background())
 	wkg               = newWorkerGroup()
-	running           = algorithm.NewCounter[string]()
+	running           = counter.New[string]()
 )
 
 func newWorkerGroup() *workerGroup {
@@ -69,7 +69,7 @@ func (w *worker) work() {
 	for {
 		select {
 		case fn := <-w.pending:
-			utils.ExecAndRecover(fn)
+			stack.ExecAndRecover(fn)
 			w.count--
 		default:
 			wkg.mu.Lock()
@@ -97,7 +97,7 @@ func Go[T gocall](fn T) {
 		go func() {
 			// GoRunMark(utils.FuncName(fn))
 			// defer GoDoneMark(utils.FuncName(fn))
-			defer utils.RecoverPanic()
+			defer stack.RecoverPanic()
 			defer process.WaitDone()
 			f(rootCtx)
 		}()
@@ -106,7 +106,7 @@ func Go[T gocall](fn T) {
 		go func() {
 			// GoRunMark(utils.FuncName(fn))
 			// defer GoDoneMark(utils.FuncName(fn))
-			defer utils.RecoverPanic()
+			defer stack.RecoverPanic()
 			defer process.WaitDone()
 			f()
 		}()
@@ -137,7 +137,7 @@ func PrintCurrentGo() {
 
 func Async[T any](m iface.IModule, f func() (T, error), cb func(T, error)) {
 	Go(func() {
-		defer utils.RecoverPanic()
+		defer stack.RecoverPanic()
 		c := &asyncCtx[T]{}
 		c.res, c.err = f()
 		m.Assign(c)

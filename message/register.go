@@ -3,8 +3,8 @@ package message
 import (
 	"reflect"
 
-	"github.com/tnnmigga/corev2/codec"
 	"github.com/tnnmigga/corev2/iface"
+	"github.com/tnnmigga/corev2/message/codec"
 )
 
 var recvers = map[reflect.Type][]iface.IModule{}
@@ -26,7 +26,7 @@ func RegisterRPC[T any](m iface.IModule, rpc func(req *T, resp func(any), err fu
 	codec.Register[T]()
 	mType := reflect.TypeOf(new(T))
 	bind(mType, m)
-	m.RegisterRPC(mType, func(req iface.IRPC) {
+	m.RegisterRPC(mType, func(req iface.IRPCCtx) {
 		body := req.RPCBody()
 		rpc(body.(*T), req.Return, req.Error)
 	})

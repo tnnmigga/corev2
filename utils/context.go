@@ -15,9 +15,9 @@ type contextWithCancel struct {
 
 func ContextWithCancel(parent context.Context) IContextWithCancel {
 	ctx, cancel := context.WithCancel(parent)
-	return &contextWithCancel {
+	return &contextWithCancel{
 		Context: ctx,
-		cancel: cancel,
+		cancel:  cancel,
 	}
 }
 
@@ -33,7 +33,6 @@ func (c *contextWithCancel) Canceled() bool {
 		return false
 	}
 }
-
 
 func ContextDone(ctx context.Context) bool {
 	select {

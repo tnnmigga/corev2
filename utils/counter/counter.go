@@ -1,4 +1,4 @@
-package algorithm
+package counter
 
 import "sync"
 
@@ -7,7 +7,7 @@ type Counter[T comparable] struct {
 	m     sync.Mutex
 }
 
-func NewCounter[T comparable]() *Counter[T] {
+func New[T comparable]() *Counter[T] {
 	return &Counter[T]{count: map[T]int{}}
 }
 

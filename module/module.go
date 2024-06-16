@@ -5,8 +5,9 @@ import (
 	"time"
 
 	"github.com/tnnmigga/corev2/conc"
+	"github.com/tnnmigga/corev2/event"
 	"github.com/tnnmigga/corev2/iface"
-	"github.com/tnnmigga/corev2/utils"
+	"github.com/tnnmigga/corev2/process"
 	"github.com/tnnmigga/corev2/zlog"
 )
 
@@ -16,7 +17,7 @@ type module struct {
 	name    string
 	mq      chan any
 	handles map[reflect.Type]func(any)
-	rpcs    map[reflect.Type](func(iface.IRPC))
+	rpcs    map[reflect.Type](func(iface.IRPCCtx))
 }
 
 func New(name string, workerNum int, mqLen int) iface.IModule {
@@ -24,7 +25,7 @@ func New(name string, workerNum int, mqLen int) iface.IModule {
 		name:    name,
 		mq:      make(chan any, mqLen),
 		handles: map[reflect.Type]func(any){},
-		rpcs:    map[reflect.Type]func(iface.IRPC){},
+		rpcs:    map[reflect.Type]func(iface.IRPCCtx){},
 	}
 	for i := 0; i < workerNum; i++ {
 		conc.Go(func() {
@@ -37,6 +38,10 @@ func New(name string, workerNum int, mqLen int) iface.IModule {
 	return m
 }
 
+func (m *module) Name() string {
+	return m.name
+}
+
 func (m *module) afterStop() error {
 	close(m.mq)
 	return nil
@@ -46,8 +51,9 @@ func (m *module) Assign(msg any) {
 	select {
 	case m.mq <- msg:
 	default:
-		zlog.Errorf("modele %s mq full, lose %s", m.name, utils.String(msg))
+		zlog.Errorf("modele %s mq full, lose %#v", m.name, msg)
 	}
+	event.RegisterHandler(m, func(i iface.IEvent) {}, process.EventAfterInit)
 }
 
 func WaitMsgHandle(timeout ...time.Duration) {
