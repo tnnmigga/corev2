@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/tnnmigga/corev2/iface"
-	"github.com/tnnmigga/corev2/process"
+	"github.com/tnnmigga/corev2/proc"
 	"github.com/tnnmigga/corev2/utils/counter"
 	"github.com/tnnmigga/corev2/utils/stack"
 	"github.com/tnnmigga/corev2/zlog"
@@ -93,21 +93,21 @@ func (w *worker) work() {
 func Go[T gocall](fn T) {
 	switch f := any(fn).(type) {
 	case func(context.Context):
-		process.WaitAdd()
+		proc.WaitAdd()
 		go func() {
 			// GoRunMark(utils.FuncName(fn))
 			// defer GoDoneMark(utils.FuncName(fn))
 			defer stack.RecoverPanic()
-			defer process.WaitDone()
+			defer proc.WaitDone()
 			f(rootCtx)
 		}()
 	case func():
-		process.WaitAdd()
+		proc.WaitAdd()
 		go func() {
 			// GoRunMark(utils.FuncName(fn))
 			// defer GoDoneMark(utils.FuncName(fn))
 			defer stack.RecoverPanic()
-			defer process.WaitDone()
+			defer proc.WaitDone()
 			f()
 		}()
 	}

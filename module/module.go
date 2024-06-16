@@ -7,7 +7,7 @@ import (
 	"github.com/tnnmigga/corev2/conc"
 	"github.com/tnnmigga/corev2/event"
 	"github.com/tnnmigga/corev2/iface"
-	"github.com/tnnmigga/corev2/process"
+	"github.com/tnnmigga/corev2/proc"
 	"github.com/tnnmigga/corev2/zlog"
 )
 
@@ -53,7 +53,7 @@ func (m *module) Assign(msg any) {
 	default:
 		zlog.Errorf("modele %s mq full, lose %#v", m.name, msg)
 	}
-	event.RegisterHandler(m, func(i iface.IEvent) {}, process.EventAfterInit)
+	event.RegisterHandler(m, func(i iface.IEvent) {}, proc.EventAfterInit)
 }
 
 func WaitMsgHandle(timeout ...time.Duration) {

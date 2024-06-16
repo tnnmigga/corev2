@@ -1,4 +1,4 @@
-package process
+package proc
 
 import (
 	"github.com/tnnmigga/corev2/event"
