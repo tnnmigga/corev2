@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/tnnmigga/corev2/utils/stack"
-	"github.com/tnnmigga/corev2/zlog"
-
 	"github.com/gogo/protobuf/proto"
+	"github.com/tnnmigga/corev2/logger"
+	"github.com/tnnmigga/corev2/utils"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -37,36 +36,26 @@ func (d *MessageDescriptor) New() any {
 }
 
 // 将消息注册到解码器
-// 可以通过指定泛型类型和参数传递类型
-func Register[T any](t ...T) {
-	if len(t) == 0 {
-		var tmp T
-		t = append(t, tmp)
-	}
-	v := t[0]
-	name := stack.TypeName(v)
-	id := stack.TypeID(v)
-	if desc, has := msgIDToDesc[id]; has {
-		if desc.MessageName != name {
-			zlog.Panicf("msgid duplicat %v %d", name, id)
+func Register[T any]() {
+	msg := new(T)
+	msgName := utils.TypeName(msg)
+	msgID := nameToID(msgName)
+	if desc, has := msgIDToDesc[msgID]; has {
+		if desc.MessageName != msgName {
+			logger.Panicf("msgid duplicat %v %d", msgName, msgID)
 		}
 	}
-	mType := reflect.TypeOf(v)
-	if mType.Kind() == reflect.Ptr {
-		mType = mType.Elem()
-	}
-	msgIDToDesc[id] = &MessageDescriptor{
-		MessageName: name,
-		MarshalType: marshalType(v),
-		ReflectType: mType,
+	msgIDToDesc[msgID] = &MessageDescriptor{
+		MessageName: msgName,
+		MarshalType: marshalType(msg),
+		ReflectType: reflect.TypeOf(msg),
 	}
 }
 
 // 编码
-// 额外拼接四字节类型id
-func Encode(v any) []byte {
-	msgID := stack.TypeID(v)
-	bytes := Marshal(v)
+func Encode(msg any) []byte {
+	msgID := nameToID(utils.TypeName(msg))
+	bytes := Marshal(msg)
 	body := make([]byte, 4, len(bytes)+4)
 	binary.LittleEndian.PutUint32(body, msgID)
 	body = append(body, bytes...)
@@ -74,8 +63,6 @@ func Encode(v any) []byte {
 }
 
 // 解码
-// 使用前需要提前注册
-// 需要头部四字节为类型id
 func Decode(b []byte) (msg any, err error) {
 	if len(b) < 4 {
 		return nil, fmt.Errorf("message decode len error %d", len(b))
@@ -95,13 +82,13 @@ func Marshal(v any) []byte {
 	if v0, ok := v.(proto.Message); ok {
 		b, err := proto.Marshal(v0)
 		if err != nil {
-			zlog.Panic(fmt.Errorf("message encode error %v", err))
+			logger.Panic(fmt.Errorf("message encode error %v", err))
 		}
 		return b
 	}
 	b, err := bson.Marshal(v)
 	if err != nil {
-		zlog.Panic(fmt.Errorf("message encode error %v", err))
+		logger.Panic(fmt.Errorf("message encode error %v", err))
 	}
 	return b
 }
@@ -124,4 +111,14 @@ func marshalType(v any) int {
 		return marshalTypeGogoproto
 	}
 	return marshalTypeBSON
+}
+
+func nameToID(msgName string) uint32 {
+	d := utils.StringToBytes(msgName)
+	p := uint32(31)
+	n := uint32(0)
+	for _, b := range d {
+		n = n*p + uint32(b)
+	}
+	return n
 }

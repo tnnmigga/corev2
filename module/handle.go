@@ -4,12 +4,38 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/tnnmigga/corev2/conc"
 	"github.com/tnnmigga/corev2/iface"
-	"github.com/tnnmigga/corev2/utils/stack"
-	"github.com/tnnmigga/corev2/zlog"
+	"github.com/tnnmigga/corev2/logger"
+	"github.com/tnnmigga/corev2/message"
+	"github.com/tnnmigga/corev2/message/codec"
+	"github.com/tnnmigga/corev2/utils"
 )
 
-func (m *module) RegisterHandler(mType reflect.Type, h func(any)) {
+func Handle[T any](m iface.IModule, h func(*T)) {
+	codec.Register[T]()
+	mType := reflect.TypeOf(new(T))
+	message.Subscribe[T](func(msg *T) {
+		m.Assign(msg)
+	})
+	m.Handle(mType, func(a any) {
+		h(a.(*T))
+	})
+}
+
+func RegisterRPC[T any](m iface.IModule, rpc func(req *T, resp func(any), err func(error))) {
+	codec.Register[T]()
+	mType := reflect.TypeOf(new(T))
+	message.Subscribe[T](func(msg *T) {
+		m.Assign(msg)
+	})
+	m.RegisterRPC(mType, func(req iface.IRPCCtx) {
+		body := req.RPCBody()
+		rpc(body.(*T), req.Return, req.Error)
+	})
+}
+
+func (m *module) Handle(mType reflect.Type, h func(any)) {
 	if _, ok := m.handles[mType]; ok {
 		panic(fmt.Errorf("duplicate registration %s", mType.String()))
 	}
@@ -24,7 +50,7 @@ func (m *module) RegisterRPC(mType reflect.Type, rpc func(iface.IRPCCtx)) {
 }
 
 func (m *module) dispatch(msg any) {
-	defer stack.RecoverPanic()
+	defer utils.RecoverPanic()
 	switch req := msg.(type) {
 	case func():
 		req()
@@ -36,7 +62,7 @@ func (m *module) dispatch(msg any) {
 			rpc(req)
 			return
 		}
-		zlog.Errorf("module %s rpc not found %s", m.name, mType.String())
+		logger.Errorf("module %s rpc not found %s", m.name, mType.String())
 	default:
 		mType := reflect.TypeOf(msg)
 		h, ok := m.handles[mType]
@@ -44,6 +70,16 @@ func (m *module) dispatch(msg any) {
 			h(msg)
 			return
 		}
-		zlog.Errorf("module %s handle not found %s", m.name, mType.String())
+		logger.Errorf("module %s handle not found %s", m.name, mType.String())
 	}
+}
+
+func Async[T any](m iface.IModule, f func() (T, error), cb func(T, error)) {
+	conc.Go(func() {
+		defer utils.RecoverPanic()
+		result, err := f()
+		m.Assign(func() {
+			cb(result, err)
+		})
+	})
 }

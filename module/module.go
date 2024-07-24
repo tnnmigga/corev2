@@ -2,16 +2,11 @@ package module
 
 import (
 	"reflect"
-	"time"
 
 	"github.com/tnnmigga/corev2/conc"
-	"github.com/tnnmigga/corev2/event"
 	"github.com/tnnmigga/corev2/iface"
-	"github.com/tnnmigga/corev2/proc"
-	"github.com/tnnmigga/corev2/zlog"
+	"github.com/tnnmigga/corev2/logger"
 )
-
-var modules = []*module{}
 
 type module struct {
 	name    string
@@ -34,50 +29,47 @@ func New(name string, workerNum int, mqLen int) iface.IModule {
 			}
 		})
 	}
-	modules = append(modules, m)
 	return m
+}
+
+func (m *module) MQ() chan any {
+	return m.mq
 }
 
 func (m *module) Name() string {
 	return m.name
 }
 
-func (m *module) afterStop() error {
-	close(m.mq)
-	return nil
-}
-
 func (m *module) Assign(msg any) {
 	select {
 	case m.mq <- msg:
 	default:
-		zlog.Errorf("modele %s mq full, lose %#v", m.name, msg)
+		logger.Errorf("modele %s mq full, lose %#v", m.name, msg)
 	}
-	event.RegisterHandler(m, func(i iface.IEvent) {}, proc.EventAfterInit)
 }
 
-func WaitMsgHandle(timeout ...time.Duration) {
-	if len(timeout) == 0 {
-		timeout = append(timeout, time.Minute)
-	}
-	const interval = 100 * time.Millisecond
-	count := int(timeout[0] / interval)
-	for i := 0; i < count; i++ {
-		flag := true
-		for _, m := range modules {
-			if len(m.mq) != 0 {
-				flag = false
-				break
-			}
-		}
-		if flag {
-			return
-		}
-		time.Sleep(interval)
-	}
-	for _, m := range modules {
-		if len(m.mq) != 0 {
-			zlog.Errorf("module mq remain %d", len(m.mq))
-		}
-	}
-}
+// func WaitMsgHandle(timeout ...time.Duration) {
+// 	if len(timeout) == 0 {
+// 		timeout = append(timeout, time.Minute)
+// 	}
+// 	const interval = 100 * time.Millisecond
+// 	count := int(timeout[0] / interval)
+// 	for i := 0; i < count; i++ {
+// 		flag := true
+// 		for _, m := range modules {
+// 			if len(m.mq) != 0 {
+// 				flag = false
+// 				break
+// 			}
+// 		}
+// 		if flag {
+// 			return
+// 		}
+// 		time.Sleep(interval)
+// 	}
+// 	for _, m := range modules {
+// 		if len(m.mq) != 0 {
+// 			zlog.Errorf("module mq remain %d", len(m.mq))
+// 		}
+// 	}
+// }

@@ -1,4 +1,4 @@
-package zlog
+package logger
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var logger *zap.SugaredLogger
+var lg *zap.SugaredLogger
 
 func init() {
 	// 先按默认值临时创建一个logger
@@ -44,51 +44,51 @@ func Init() {
 	if err != nil {
 		panic(fmt.Errorf("zlog Init conf build error: %v", err))
 	}
-	logger = l.Sugar()
+	lg = l.Sugar()
 }
 
 func Logger() *zap.SugaredLogger {
-	return logger
+	return lg
 }
 
 func Debug(args ...any) {
-	logger.Debug(args...)
+	lg.Debug(args...)
 }
 
 func Debugf(format string, args ...any) {
-	logger.Debugf(format, args...)
+	lg.Debugf(format, args...)
 }
 
 func Info(args ...any) {
-	logger.Info(args...)
+	lg.Info(args...)
 }
 
 func Infof(format string, args ...any) {
-	logger.Infof(format, args...)
+	lg.Infof(format, args...)
 }
 
 func Warn(args ...any) {
-	logger.Warn(args...)
+	lg.Warn(args...)
 }
 
 func Warnf(format string, args ...any) {
-	logger.Warnf(format, args...)
+	lg.Warnf(format, args...)
 }
 
 func Error(args ...any) {
-	logger.Error(args...)
+	lg.Error(args...)
 }
 
 func Errorf(format string, args ...any) {
-	logger.Errorf(format, args...)
+	lg.Errorf(format, args...)
 }
 
 func Panic(args ...any) {
-	logger.Panic(args...)
+	lg.Panic(args...)
 }
 
 func Panicf(format string, args ...any) {
-	logger.Panicf(format, args...)
+	lg.Panicf(format, args...)
 }
 
 // func Fatal(args ...any) {

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/procodr/monkey"
-	"github.com/tnnmigga/corev2/zlog"
+	"github.com/tnnmigga/corev2/logger"
 )
 
 var addTime = &atomic.Int64{}
@@ -21,7 +21,7 @@ func FakeNow() time.Time {
 func init() {
 	defer func() {
 		if r := recover(); r != nil {
-			zlog.Errorf("faketime err %v", r)
+			logger.Errorf("faketime err %v", r)
 		}
 	}()
 	monkey.Patch(time.Now, FakeNow)

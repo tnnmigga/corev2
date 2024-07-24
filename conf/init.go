@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"regexp"
 )
 
-func Init(b []byte) {
+func init() {
+	f, err := os.OpenFile("configs.jsonc", )
+	io.ReadAll()
 	LoadFromJSON(b)
-	serverID = Int("server.id")
-	serverType = String("server.type")
 }
 
 var (

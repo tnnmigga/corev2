@@ -1,7 +1,0 @@
-syntax = "proto3";
-package event;
-
-message Event {
-    string Type                = 1;
-    map<string, string> Values = 2;
-}

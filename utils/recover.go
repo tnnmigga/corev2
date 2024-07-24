@@ -1,18 +1,16 @@
-package stack
+package utils
 
 import (
 	"reflect"
 	"runtime"
 	"runtime/debug"
-	"strings"
 
-	"github.com/tnnmigga/corev2/utils/idgen"
-	"github.com/tnnmigga/corev2/zlog"
+	"github.com/tnnmigga/corev2/logger"
 )
 
 func RecoverPanic() {
 	if r := recover(); r != nil {
-		zlog.Errorf("%v: %s", r, debug.Stack())
+		logger.Errorf("%v: %s", r, debug.Stack())
 	}
 }
 
@@ -34,16 +32,6 @@ func Caller(skip ...int) string {
 	return runtime.FuncForPC(pc).Name()
 }
 
-// 获取包名
-func PkgName() string {
-	pc, _, _, ok := runtime.Caller(1)
-	if !ok {
-		return ""
-	}
-	name := runtime.FuncForPC(pc).Name()
-	return strings.Split(name, ".")[0]
-}
-
 // 获取结构体名称
 func TypeName(v any) string {
 	mType := reflect.TypeOf(v)
@@ -51,11 +39,6 @@ func TypeName(v any) string {
 		mType = mType.Elem()
 	}
 	return mType.Name()
-}
-
-func TypeID(v any) uint32 {
-	name := TypeName(v)
-	return idgen.HashToID(name)
 }
 
 // 获取函数名称

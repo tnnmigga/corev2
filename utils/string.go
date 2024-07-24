@@ -1,4 +1,4 @@
-package conv
+package utils
 
 import "unsafe"
 
@@ -16,4 +16,3 @@ func StringToBytes(s string) []byte {
 		}{s, len(s)},
 	))
 }
-               

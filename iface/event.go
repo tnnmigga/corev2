@@ -1,10 +1,14 @@
 package iface
 
+type IEventBus interface {
+	Subscribe(func(IEvent), ...string)
+	Publish(IEvent)
+}
+
 type IEventSubscriber interface {
-	IModule
 	Name() string
-	Subscribing() []string
-	Handler(IEvent)
+	Subscribing(string) bool
+	Handle(IEvent)
 }
 
 type IEvent interface {

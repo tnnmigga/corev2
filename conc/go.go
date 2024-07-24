@@ -1,20 +1,14 @@
 package conc
 
 import (
-	"context"
 	"sync"
 
-	"github.com/tnnmigga/corev2/iface"
-	"github.com/tnnmigga/corev2/proc"
-	"github.com/tnnmigga/corev2/utils/counter"
-	"github.com/tnnmigga/corev2/utils/stack"
-	"github.com/tnnmigga/corev2/zlog"
+	"github.com/tnnmigga/corev2/process"
+	"github.com/tnnmigga/corev2/utils"
 )
 
 var (
-	rootCtx, cancelGo = context.WithCancel(context.Background())
-	wkg               = newWorkerGroup()
-	running           = counter.New[string]()
+	wkg = newWorkerGroup()
 )
 
 func newWorkerGroup() *workerGroup {
@@ -27,10 +21,6 @@ func newWorkerGroup() *workerGroup {
 			},
 		},
 	}
-}
-
-type gocall interface {
-	func(context.Context) | func()
 }
 
 type workerGroup struct {
@@ -69,7 +59,7 @@ func (w *worker) work() {
 	for {
 		select {
 		case fn := <-w.pending:
-			stack.ExecAndRecover(fn)
+			utils.ExecAndRecover(fn)
 			w.count--
 		default:
 			wkg.mu.Lock()
@@ -87,69 +77,18 @@ func (w *worker) work() {
 	}
 }
 
-// 开启一个受到一定监督的协程
-// 若fn参数包含context.Context类型, 当系统准备退出时, 此ctx会Done, 此时必须退出协程
-// 系统会等候所有由Go开辟的协程退出后再退出
-func Go[T gocall](fn T) {
-	switch f := any(fn).(type) {
-	case func(context.Context):
-		proc.WaitAdd()
-		go func() {
-			// GoRunMark(utils.FuncName(fn))
-			// defer GoDoneMark(utils.FuncName(fn))
-			defer stack.RecoverPanic()
-			defer proc.WaitDone()
-			f(rootCtx)
-		}()
-	case func():
-		proc.WaitAdd()
-		go func() {
-			// GoRunMark(utils.FuncName(fn))
-			// defer GoDoneMark(utils.FuncName(fn))
-			defer stack.RecoverPanic()
-			defer proc.WaitDone()
-			f()
-		}()
-	}
+// 开启一个安全的协程
+func Go(fn func()) {
+	process.WaitAdd()
+	go func() {
+		defer utils.RecoverPanic()
+		defer process.WaitDone()
+		fn()
+	}()
 }
 
 // 规则同Go, 但是可以通过name参数对协程进行分组
 // 同分组下的任务会等候上一个执行完毕后再执行
 func GoWithGroup(name string, fn func()) {
 	wkg.run(name, fn)
-}
-
-func GoRunMark(key string) {
-	running.Change(key, 1)
-}
-
-func GoDoneMark(key string) {
-	running.Change(key, -1)
-}
-
-func PrintCurrentGo() {
-	running.Range(func(s string, i int) {
-		if i > 0 {
-			zlog.Debugf("Go %s: %d", s, i)
-		}
-	})
-}
-
-func Async[T any](m iface.IModule, f func() (T, error), cb func(T, error)) {
-	Go(func() {
-		defer stack.RecoverPanic()
-		c := &asyncCtx[T]{}
-		c.res, c.err = f()
-		m.Assign(c)
-	})
-}
-
-type asyncCtx[T any] struct {
-	res T
-	err error
-	cb  func(T, error)
-}
-
-func (c *asyncCtx[T]) AsyncCb() {
-	c.cb(c.res, c.err)
 }
