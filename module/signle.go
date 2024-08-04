@@ -8,39 +8,33 @@ import (
 	"github.com/tnnmigga/corev2/logger"
 )
 
-type module struct {
-	name    string
-	mq      chan any
-	handles map[reflect.Type]func(any)
-	rpcs    map[reflect.Type](func(iface.IRPCCtx))
+type signle struct {
+	basic
+	mq chan any
 }
 
-func New(name string, workerNum int, mqLen int) iface.IModule {
-	m := &module{
-		name:    name,
-		mq:      make(chan any, mqLen),
-		handles: map[reflect.Type]func(any){},
-		rpcs:    map[reflect.Type]func(iface.IRPCCtx){},
+func Single(name string, mqLen int) iface.IModule {
+	m := &signle{
+		mq: make(chan any, mqLen),
+		basic: basic{
+			name:    name,
+			handles: map[reflect.Type]func(any){},
+			rpcs:    map[reflect.Type]func(iface.IRPCCtx){},
+		},
 	}
-	for i := 0; i < workerNum; i++ {
-		conc.Go(func() {
-			for req := range m.mq {
-				m.dispatch(req)
-			}
-		})
-	}
+	conc.Go(func() {
+		for req := range m.mq {
+			m.dispatch(req)
+		}
+	})
 	return m
 }
 
-func (m *module) MQ() chan any {
-	return m.mq
-}
-
-func (m *module) Name() string {
+func (m *signle) Name() string {
 	return m.name
 }
 
-func (m *module) Assign(msg any) {
+func (m *signle) Assign(msg any) {
 	select {
 	case m.mq <- msg:
 	default:

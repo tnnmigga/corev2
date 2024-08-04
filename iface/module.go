@@ -7,7 +7,6 @@ type IModule interface {
 	Handle(mType reflect.Type, h func(any))
 	RegisterRPC(mType reflect.Type, rpc func(IRPCCtx))
 	Assign(any)
-	MQ() chan any
 }
 
 type IRPCCtx interface {

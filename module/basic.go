@@ -12,44 +12,33 @@ import (
 	"github.com/tnnmigga/corev2/utils"
 )
 
-func Handle[T any](m iface.IModule, h func(*T)) {
-	codec.Register[T]()
-	mType := reflect.TypeOf(new(T))
-	message.Subscribe[T](func(msg *T) {
-		m.Assign(msg)
-	})
-	m.Handle(mType, func(a any) {
-		h(a.(*T))
-	})
+type basic struct {
+	name    string
+	handles map[reflect.Type]func(any)
+	rpcs    map[reflect.Type](func(iface.IRPCCtx))
 }
 
-func RegisterRPC[T any](m iface.IModule, rpc func(req *T, resp func(any), err func(error))) {
-	codec.Register[T]()
-	mType := reflect.TypeOf(new(T))
-	message.Subscribe[T](func(msg *T) {
-		m.Assign(msg)
-	})
-	m.RegisterRPC(mType, func(req iface.IRPCCtx) {
-		body := req.RPCBody()
-		rpc(body.(*T), req.Return, req.Error)
-	})
-}
-
-func (m *module) Handle(mType reflect.Type, h func(any)) {
+func (m *basic) Handle(mType reflect.Type, h func(any)) {
 	if _, ok := m.handles[mType]; ok {
 		panic(fmt.Errorf("duplicate registration %s", mType.String()))
 	}
 	m.handles[mType] = h
 }
 
-func (m *module) RegisterRPC(mType reflect.Type, rpc func(iface.IRPCCtx)) {
+func (m *basic) RegisterRPC(mType reflect.Type, rpc func(iface.IRPCCtx)) {
 	if _, ok := m.rpcs[mType]; ok {
 		panic(fmt.Errorf("duplicate registration %s", mType.String()))
 	}
 	m.rpcs[mType] = rpc
 }
 
-func (m *module) dispatch(msg any) {
+func (m *basic) Assign(msg any) {
+	conc.Go(func() {
+		m.dispatch(msg)
+	})
+}
+
+func (m *basic) dispatch(msg any) {
 	defer utils.RecoverPanic()
 	switch req := msg.(type) {
 	case func():
@@ -72,6 +61,29 @@ func (m *module) dispatch(msg any) {
 		}
 		logger.Errorf("module %s handle not found %s", m.name, mType.String())
 	}
+}
+
+func Handle[T any](m iface.IModule, h func(*T)) {
+	codec.Register[T]()
+	mType := reflect.TypeOf(new(T))
+	message.Subscribe[T](func(msg *T) {
+		m.Assign(msg)
+	})
+	m.Handle(mType, func(a any) {
+		h(a.(*T))
+	})
+}
+
+func RegisterRPC[T any](m iface.IModule, rpc func(req *T, resp func(any), err func(error))) {
+	codec.Register[T]()
+	mType := reflect.TypeOf(new(T))
+	message.Subscribe[T](func(msg *T) {
+		m.Assign(msg)
+	})
+	m.RegisterRPC(mType, func(req iface.IRPCCtx) {
+		body := req.RPCBody()
+		rpc(body.(*T), req.Return, req.Error)
+	})
 }
 
 func Async[T any](m iface.IModule, f func() (T, error), cb func(T, error)) {
