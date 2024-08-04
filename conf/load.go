@@ -1,6 +1,59 @@
 package conf
 
-import "strings"
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"regexp"
+	"strings"
+)
+
+func init() {
+	fname := "configs.jsonc"
+	b := loadLocalFile(fname)
+	if b == nil {
+		return
+	}
+	LoadFromJSON(b)
+}
+
+func loadLocalFile(fname string) []byte {
+	file, err := os.OpenFile(fname, os.O_RDONLY, 0)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	b, err := io.ReadAll(file)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	return b
+}
+
+var (
+	confs map[string]any = map[string]any{}
+)
+
+var ErrConfigNotFound error = errors.New("configs not found")
+
+func LoadFromJSON(b []byte) {
+	b = uncomment(b)
+	err := json.Unmarshal(b, &confs)
+	if err != nil {
+		panic(fmt.Errorf("LoadFromJSON unmarshal error %v", err))
+	}
+}
+
+func uncomment(b []byte) []byte {
+	reg := regexp.MustCompile(`/\*{1,2}[\s\S]*?\*/`)
+	b = reg.ReplaceAll(b, []byte("\n"))
+	reg = regexp.MustCompile(`\s//[\s\S]*?\n`)
+	return reg.ReplaceAll(b, []byte("\n"))
+}
 
 func Any[T any](name string) (v T, ok bool) {
 	path := strings.Split(name, ".")
@@ -27,7 +80,7 @@ func Int(name string, default_ ...int) int {
 	if len(default_) > 0 {
 		return default_[0]
 	}
-	panic(errConfigNotFound)
+	panic(ErrConfigNotFound)
 }
 
 func Int64(name string, default_ ...int64) int64 {
@@ -38,7 +91,7 @@ func Int64(name string, default_ ...int64) int64 {
 	if len(default_) > 0 {
 		return default_[0]
 	}
-	panic(errConfigNotFound)
+	panic(ErrConfigNotFound)
 }
 
 func Int32(name string, default_ ...int32) int32 {
@@ -49,7 +102,7 @@ func Int32(name string, default_ ...int32) int32 {
 	if len(default_) > 0 {
 		return default_[0]
 	}
-	panic(errConfigNotFound)
+	panic(ErrConfigNotFound)
 }
 
 func Uint64(name string, default_ ...uint64) uint64 {
@@ -60,7 +113,7 @@ func Uint64(name string, default_ ...uint64) uint64 {
 	if len(default_) > 0 {
 		return default_[0]
 	}
-	panic(errConfigNotFound)
+	panic(ErrConfigNotFound)
 }
 
 func Uint32(name string, default_ ...uint32) uint32 {
@@ -71,7 +124,7 @@ func Uint32(name string, default_ ...uint32) uint32 {
 	if len(default_) > 0 {
 		return default_[0]
 	}
-	panic(errConfigNotFound)
+	panic(ErrConfigNotFound)
 }
 
 func String(name string, default_ ...string) string {
@@ -82,7 +135,7 @@ func String(name string, default_ ...string) string {
 	if len(default_) > 0 {
 		return default_[0]
 	}
-	panic(errConfigNotFound)
+	panic(ErrConfigNotFound)
 }
 
 func Float64(name string, default_ ...float64) float64 {
@@ -93,7 +146,7 @@ func Float64(name string, default_ ...float64) float64 {
 	if len(default_) > 0 {
 		return default_[0]
 	}
-	panic(errConfigNotFound)
+	panic(ErrConfigNotFound)
 }
 
 func Bool(name string, default_ ...bool) bool {
@@ -104,7 +157,7 @@ func Bool(name string, default_ ...bool) bool {
 	if len(default_) > 0 {
 		return default_[0]
 	}
-	panic(errConfigNotFound)
+	panic(ErrConfigNotFound)
 }
 
 func Array[T any](name string, default_ ...[]T) []T {
@@ -119,7 +172,7 @@ func Array[T any](name string, default_ ...[]T) []T {
 	if len(default_) > 0 {
 		return default_[0]
 	}
-	panic(errConfigNotFound)
+	panic(ErrConfigNotFound)
 }
 
 func Map[T any](name string, default_ ...map[string]T) map[string]T {
@@ -134,5 +187,14 @@ func Map[T any](name string, default_ ...map[string]T) map[string]T {
 	if len(default_) > 0 {
 		return default_[0]
 	}
-	panic(errConfigNotFound)
+	panic(ErrConfigNotFound)
+}
+
+func Scan(name string, v any) error {
+	a, ok := Any[any](name)
+	if !ok {
+		return ErrConfigNotFound
+	}
+	b, _ := json.Marshal(a)
+	return json.Unmarshal(b, v)
 }

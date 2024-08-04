@@ -3,7 +3,7 @@ package conc
 import (
 	"sync"
 
-	"github.com/tnnmigga/corev2/process"
+	"github.com/tnnmigga/corev2/system"
 	"github.com/tnnmigga/corev2/utils"
 )
 
@@ -79,10 +79,10 @@ func (w *worker) work() {
 
 // 开启一个安全的协程
 func Go(fn func()) {
-	process.WaitAdd()
+	system.WaitAdd()
 	go func() {
 		defer utils.RecoverPanic()
-		defer process.WaitDone()
+		defer system.WaitDone()
 		fn()
 	}()
 }
