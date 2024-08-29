@@ -71,8 +71,9 @@ type threadPoolModule struct {
 }
 
 // 线程池模式
-func NewThreadPool(name string, goNum int) iface.IModule {
+func NewThreadPool(name string, mqLen int, goNum int) iface.IModule {
 	m := &threadPoolModule{
+		mq: make(chan any, mqLen),
 		basic: basic{
 			name:    name,
 			handles: map[reflect.Type]func(any){},
