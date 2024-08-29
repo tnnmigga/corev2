@@ -43,7 +43,7 @@ type concurrencyModule struct {
 	basic
 }
 
-// 每个请求一个携程执行
+// 每个请求一个goroutine执行
 func NewConcurrency(name string) iface.IModule {
 	m := &concurrencyModule{
 		basic: basic{
