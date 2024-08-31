@@ -8,6 +8,10 @@ import (
 	"github.com/tnnmigga/corev2/utils"
 )
 
+const (
+	defaultTimeout = time.Second * 10
+)
+
 func castSubject(serverID uint32) string {
 	return fmt.Sprintf("cast.%d", serverID)
 }
@@ -28,8 +32,8 @@ func rpcSubject(serverID uint32) string {
 	return fmt.Sprintf("rpc.%d", serverID)
 }
 
-func randomRpcSubject(serverType string) string {
-	return fmt.Sprintf("randomrpc.%s", serverType)
+func randomRpcSubject(group string) string {
+	return fmt.Sprintf("randomrpc.%s", group)
 }
 
 type RPCContext struct {
@@ -66,7 +70,7 @@ func (ctx *RPCContext) Return(resp any, err error) {
 }
 
 func (ctx *RPCContext) wait() error {
-	timeout := time.NewTimer(time.Second * 10)
+	timeout := time.NewTimer(defaultTimeout)
 	defer timeout.Stop()
 	select {
 	case <-ctx.sign:

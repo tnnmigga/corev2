@@ -3,7 +3,6 @@ package message
 import (
 	fmt "fmt"
 	"reflect"
-	"time"
 
 	"github.com/mohae/deepcopy"
 	"github.com/tnnmigga/corev2/conc"
@@ -24,7 +23,7 @@ func Subscribe[T any](m iface.IModule) {
 }
 
 // 跨进程投递消息
-func Cast(msg any, serverID uint32) error {
+func Cast(serverID uint32, msg any) error {
 	if serverID == conf.ServerID {
 		Delivery(msg)
 	}
@@ -36,7 +35,7 @@ func Cast(msg any, serverID uint32) error {
 	return err
 }
 
-func Stream(msg any, serverID uint32) error {
+func Stream(serverID uint32, msg any) error {
 	if serverID == conf.ServerID {
 		Delivery(msg)
 	}
@@ -89,7 +88,7 @@ func Randomcast(group string, msg any) error {
 func RPCAsync[T any](caller iface.IModule, serverID uint32, req any, cb func(resp *T, err error)) {
 	b := codec.Encode(req)
 	conc.Go(func() {
-		msg, err := natsmq.Default().Conn.Request(rpcSubject(serverID), b, 10*time.Second)
+		msg, err := natsmq.Default().Conn.Request(rpcSubject(serverID), b, defaultTimeout)
 		if err != nil {
 			caller.Assign(func() {
 				cb(nil, err)
@@ -118,7 +117,54 @@ func RPCAsync[T any](caller iface.IModule, serverID uint32, req any, cb func(res
 
 func RPC[T any](serverID uint32, req any) (*T, error) {
 	b := codec.Encode(req)
-	msg, err := natsmq.Default().Conn.Request(rpcSubject(serverID), b, 10*time.Second)
+	msg, err := natsmq.Default().Conn.Request(rpcSubject(serverID), b, defaultTimeout)
+	if err != nil {
+		return nil, err
+	}
+	result, err := codec.Decode(msg.Data)
+	if err != nil {
+		return nil, fmt.Errorf("RPC response decode error: %v", err)
+	}
+	data, ok := conv.Pointer[T](result)
+	if !ok {
+		return nil, fmt.Errorf("RPC response type error: %v", utils.TypeName(result))
+	}
+	return data, err
+}
+
+func RandomRPCAsync[T any](caller iface.IModule, group string, req any, cb func(resp *T, err error)) {
+	b := codec.Encode(req)
+	conc.Go(func() {
+		msg, err := natsmq.Default().Conn.Request(randomRpcSubject(group), b, defaultTimeout)
+		if err != nil {
+			caller.Assign(func() {
+				cb(nil, err)
+			})
+			return
+		}
+		result, err := codec.Decode(msg.Data)
+		if err != nil {
+			caller.Assign(func() {
+				cb(nil, fmt.Errorf("RPC response decode error: %v", err))
+			})
+			return
+		}
+		data, ok := conv.Pointer[T](result)
+		if !ok {
+			caller.Assign(func() {
+				cb(nil, fmt.Errorf("RPC response type error: %v", utils.TypeName(result)))
+			})
+			return
+		}
+		caller.Assign(func() {
+			cb(data, nil)
+		})
+	})
+}
+
+func RandomRPC[T any](group string, req any) (*T, error) {
+	b := codec.Encode(req)
+	msg, err := natsmq.Default().Conn.Request(randomRpcSubject(group), b, defaultTimeout)
 	if err != nil {
 		return nil, err
 	}
