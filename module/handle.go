@@ -64,9 +64,7 @@ func (m *basic) dispatch(msg any) {
 func Handle[T any](m iface.IModule, h func(*T)) {
 	codec.Register[T]()
 	mType := reflect.TypeOf(new(T))
-	message.Subscribe[T](func(msg *T) {
-		m.Assign(msg)
-	})
+	message.Subscribe[T](m)
 	m.Handle(mType, func(a any) {
 		h(a.(*T))
 	})
@@ -75,9 +73,7 @@ func Handle[T any](m iface.IModule, h func(*T)) {
 func RegisterRPC[T any](m iface.IModule, rpc func(req *T, resp func(any), err func(error))) {
 	codec.Register[T]()
 	mType := reflect.TypeOf(new(T))
-	message.Subscribe[T](func(msg *T) {
-		m.Assign(msg)
-	})
+	message.Subscribe[T](m)
 	m.RegisterRPC(mType, func(req iface.IRPCCtx) {
 		body := req.RPCBody()
 		rpc(body.(*T), req.Return, req.Error)
