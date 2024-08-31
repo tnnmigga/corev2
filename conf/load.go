@@ -9,6 +9,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 func init() {
@@ -17,7 +19,8 @@ func init() {
 	if b == nil {
 		return
 	}
-	LoadFromJSON(b)
+	initFromJSON(b)
+	mustInit()
 }
 
 func loadLocalFile(fname string) []byte {
@@ -40,7 +43,7 @@ var (
 
 var ErrConfigNotFound error = errors.New("configs not found")
 
-func LoadFromJSON(b []byte) {
+func initFromJSON(b []byte) {
 	b = uncomment(b)
 	err := json.Unmarshal(b, &confs)
 	if err != nil {
@@ -160,7 +163,7 @@ func Bool(name string, default_ ...bool) bool {
 	panic(ErrConfigNotFound)
 }
 
-func Array[T any](name string, default_ ...[]T) []T {
+func List[T any](name string, default_ ...[]T) []T {
 	a, ok := Any[[]any](name)
 	if ok {
 		ar := make([]T, len(a))
@@ -178,9 +181,10 @@ func Array[T any](name string, default_ ...[]T) []T {
 func Map[T any](name string, default_ ...map[string]T) map[string]T {
 	a, ok := Any[map[string]any](name)
 	if ok {
-		m := make(map[string]T, len(a))
-		for k, v := range a {
-			m[k] = v.(T)
+		var m map[string]T
+		err := mapstructure.Decode(a, &m)
+		if err != nil {
+			panic(err)
 		}
 		return m
 	}
@@ -195,6 +199,5 @@ func Scan(name string, v any) error {
 	if !ok {
 		return ErrConfigNotFound
 	}
-	b, _ := json.Marshal(a)
-	return json.Unmarshal(b, v)
+	return mapstructure.Decode(a, v)
 }

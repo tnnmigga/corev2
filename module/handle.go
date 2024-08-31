@@ -6,7 +6,7 @@ import (
 
 	"github.com/tnnmigga/corev2/conc"
 	"github.com/tnnmigga/corev2/iface"
-	"github.com/tnnmigga/corev2/logger"
+	"github.com/tnnmigga/corev2/log"
 	"github.com/tnnmigga/corev2/message"
 	"github.com/tnnmigga/corev2/message/codec"
 	"github.com/tnnmigga/corev2/utils"
@@ -49,7 +49,7 @@ func (m *basic) dispatch(msg any) {
 			rpc(req)
 			return
 		}
-		logger.Errorf("module %s rpc not found %s", m.name, mType.String())
+		log.Errorf("module %s rpc not found %s", m.name, mType.String())
 	default:
 		mType := reflect.TypeOf(msg)
 		h, ok := m.handles[mType]
@@ -57,7 +57,7 @@ func (m *basic) dispatch(msg any) {
 			h(msg)
 			return
 		}
-		logger.Errorf("module %s handle not found %s", m.name, mType.String())
+		log.Errorf("module %s handle not found %s", m.name, mType.String())
 	}
 }
 
@@ -70,13 +70,13 @@ func Handle[T any](m iface.IModule, h func(*T)) {
 	})
 }
 
-func RegisterRPC[T any](m iface.IModule, rpc func(req *T, resp func(any), err func(error))) {
+func RegisterRPC[T any](m iface.IModule, rpc func(req *T, resp func(any, error))) {
 	codec.Register[T]()
 	mType := reflect.TypeOf(new(T))
 	message.Subscribe[T](m)
 	m.RegisterRPC(mType, func(req iface.IRPCCtx) {
 		body := req.RPCBody()
-		rpc(body.(*T), req.Return, req.Error)
+		rpc(body.(*T), req.Return)
 	})
 }
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/tnnmigga/corev2/conc"
 	"github.com/tnnmigga/corev2/iface"
-	"github.com/tnnmigga/corev2/logger"
+	"github.com/tnnmigga/corev2/log"
 )
 
 type eventLoopModule struct {
@@ -35,7 +35,7 @@ func (m *eventLoopModule) Assign(msg any) {
 	select {
 	case m.mq <- msg:
 	default:
-		logger.Errorf("modele %s mq full, lose %#v", m.name, msg)
+		log.Errorf("modele %s mq full, lose %#v", m.name, msg)
 	}
 }
 
@@ -94,7 +94,7 @@ func (m *threadPoolModule) Assign(msg any) {
 	select {
 	case m.mq <- msg:
 	default:
-		logger.Errorf("modele %s mq full, lose %#v", m.name, msg)
+		log.Errorf("modele %s mq full, lose %#v", m.name, msg)
 	}
 }
 

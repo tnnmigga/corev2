@@ -11,6 +11,5 @@ type IModule interface {
 
 type IRPCCtx interface {
 	RPCBody() any
-	Return(any)
-	Error(error)
+	Return(any, error)
 }

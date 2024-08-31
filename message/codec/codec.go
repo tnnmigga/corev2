@@ -7,7 +7,7 @@ import (
 	"reflect"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/tnnmigga/corev2/logger"
+	"github.com/tnnmigga/corev2/log"
 	"github.com/tnnmigga/corev2/utils"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -42,7 +42,7 @@ func Register[T any]() {
 	msgID := nameToID(msgName)
 	if desc, has := msgIDToDesc[msgID]; has {
 		if desc.MessageName != msgName {
-			logger.Panicf("msgid duplicat %v %d", msgName, msgID)
+			log.Panicf("msgid duplicat %v %d", msgName, msgID)
 		}
 	}
 	msgIDToDesc[msgID] = &MessageDescriptor{
@@ -82,13 +82,13 @@ func Marshal(v any) []byte {
 	if v0, ok := v.(proto.Message); ok {
 		b, err := proto.Marshal(v0)
 		if err != nil {
-			logger.Panic(fmt.Errorf("message encode error %v", err))
+			log.Panic(fmt.Errorf("message encode error %v", err))
 		}
 		return b
 	}
 	b, err := bson.Marshal(v)
 	if err != nil {
-		logger.Panic(fmt.Errorf("message encode error %v", err))
+		log.Panic(fmt.Errorf("message encode error %v", err))
 	}
 	return b
 }

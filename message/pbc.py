@@ -24,7 +24,7 @@ def gogoFile():
             if file.endswith('.proto'):
                 proto_files.append(os.path.join(root, file))
     os.mkdir(source + '/tmp')
-    os.system("cp -r common/infra/message/gogoproto {}/tmp".format(source))
+    os.system("cp -r {}/gogoproto {}/tmp".format(sys.path[0], source))
     for file in proto_files:
         with open(file, 'r+') as f:
             txt = f.read()
@@ -35,8 +35,8 @@ def gogoFile():
                 txt = txt[:index] + insertTxt() + txt[index:]
         with open(source + '/tmp/'+file.split('/')[-1], 'w') as f:
             f.write(txt)
-    os.system('protoc -I={}/tmp --proto_path=./{} --gofast_out=./{}/tmp {}/tmp/*.proto'.format(source, source, source, source))
-    os.system('mv {}/tmp/*.go {}/'.format(source, source))    
+    os.system('protoc -I={}/tmp --gofast_out=paths=source_relative:./{}/tmp {}/tmp/*.proto'.format(source, source, source, source))
+    os.system('mv {}/tmp/*.go {}/'.format(source, source))
     os.system('rm -r {}/tmp'.format(source))
 
 def insertIndex(txt):

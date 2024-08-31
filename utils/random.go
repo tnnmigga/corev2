@@ -3,7 +3,7 @@ package utils
 import (
 	"math/rand"
 
-	"github.com/tnnmigga/corev2/logger"
+	"github.com/tnnmigga/corev2/log"
 	"golang.org/x/exp/constraints"
 )
 
@@ -16,7 +16,7 @@ func RandomInterval[T constraints.Integer](low, high T) T {
 func RandomIntervalN[T constraints.Integer](low, high T, num T) map[T]struct{} {
 	maxNum := high - low + 1
 	if maxNum < num {
-		logger.Errorf("max random num not enough")
+		log.Errorf("max random num not enough")
 		return nil
 	}
 	var m map[T]struct{}
