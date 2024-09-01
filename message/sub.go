@@ -8,7 +8,7 @@ import (
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/tnnmigga/corev2/conc"
 	"github.com/tnnmigga/corev2/conf"
-	"github.com/tnnmigga/corev2/infra/natsmq"
+	"github.com/tnnmigga/corev2/infra/nmq"
 	"github.com/tnnmigga/corev2/log"
 	"github.com/tnnmigga/corev2/message/codec"
 )
@@ -21,7 +21,7 @@ var (
 func createOrUpdateStream() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	js, err := natsmq.Default().Stream().CreateOrUpdateStream(ctx, jetstream.StreamConfig{
+	js, err := nmq.Default().Stream().CreateOrUpdateStream(ctx, jetstream.StreamConfig{
 		Name:         streamName(),
 		Subjects:     []string{streamCastSubject(conf.ServerID)},
 		MaxConsumers: 1,
@@ -67,28 +67,28 @@ func consumeMsg(msg jetstream.Msg) {
 }
 
 func subscribeMsg() error {
-	sub, err := natsmq.Default().Subscribe(castSubject(conf.ServerID), handleCastMsg)
+	sub, err := nmq.Default().Subscribe(castSubject(conf.ServerID), handleCastMsg)
 	if err != nil {
 		return err
 	}
 	msgSubscriptions = append(msgSubscriptions, sub)
-	sub, err = natsmq.Default().Subscribe(rpcSubject(conf.ServerID), handleRPCMsg)
+	sub, err = nmq.Default().Subscribe(rpcSubject(conf.ServerID), handleRPCMsg)
 	if err != nil {
 		return err
 	}
 	msgSubscriptions = append(msgSubscriptions, sub)
 	for _, group := range conf.Groups {
-		sub, err = natsmq.Default().Subscribe(broadcastSubject(group), handleCastMsg)
+		sub, err = nmq.Default().Subscribe(broadcastSubject(group), handleCastMsg)
 		if err != nil {
 			return err
 		}
 		msgSubscriptions = append(msgSubscriptions, sub)
-		sub, err = natsmq.Default().Subscribe(anycastSubject(group), handleCastMsg)
+		sub, err = nmq.Default().Subscribe(anycastSubject(group), handleCastMsg)
 		if err != nil {
 			return err
 		}
 		msgSubscriptions = append(msgSubscriptions, sub)
-		sub, err = natsmq.Default().Subscribe(anyRPCSubject(group), handleRPCMsg)
+		sub, err = nmq.Default().Subscribe(anyRPCSubject(group), handleRPCMsg)
 		if err != nil {
 			return err
 		}

@@ -9,7 +9,7 @@ import (
 	"github.com/tnnmigga/corev2/conc"
 	"github.com/tnnmigga/corev2/conf"
 	"github.com/tnnmigga/corev2/iface"
-	"github.com/tnnmigga/corev2/infra/natsmq"
+	"github.com/tnnmigga/corev2/infra/nmq"
 	"github.com/tnnmigga/corev2/log"
 	"github.com/tnnmigga/corev2/message/codec"
 	"github.com/tnnmigga/corev2/utils"
@@ -29,7 +29,7 @@ func Cast(serverID uint32, msg any) error {
 		Delivery(msg)
 	}
 	b := codec.Encode(msg)
-	err := natsmq.Default().Publish(castSubject(serverID), b)
+	err := nmq.Default().Publish(castSubject(serverID), b)
 	if err != nil {
 		log.Error(err)
 	}
@@ -41,7 +41,7 @@ func Stream(serverID uint32, msg any) error {
 		Delivery(msg)
 	}
 	b := codec.Encode(msg)
-	_, err := natsmq.Default().Stream().PublishAsync(streamCastSubject(serverID), b)
+	_, err := nmq.Default().Stream().PublishAsync(streamCastSubject(serverID), b)
 	if err != nil {
 		log.Error(err)
 	}
@@ -63,7 +63,7 @@ func Delivery(msg any) {
 // 广播到一个分组下的所有进程
 func Broadcast(group string, msg any) error {
 	b := codec.Encode(msg)
-	err := natsmq.Default().Publish(broadcastSubject(group), b)
+	err := nmq.Default().Publish(broadcastSubject(group), b)
 	if err != nil {
 		log.Error(err)
 	}
@@ -73,7 +73,7 @@ func Broadcast(group string, msg any) error {
 // 随机投递到一个分组下的某个进程
 func Anycast(group string, msg any) error {
 	b := codec.Encode(msg)
-	err := natsmq.Default().Publish(anycastSubject(group), b)
+	err := nmq.Default().Publish(anycastSubject(group), b)
 	if err != nil {
 		log.Error(err)
 	}
@@ -89,7 +89,7 @@ func Anycast(group string, msg any) error {
 func RPCAsync[T any](caller iface.IModule, serverID uint32, req any, cb func(resp *T, err error)) {
 	b := codec.Encode(req)
 	conc.Go(func() {
-		msg, err := natsmq.Default().Conn.Request(rpcSubject(serverID), b, defaultTimeout)
+		msg, err := nmq.Default().Conn.Request(rpcSubject(serverID), b, defaultTimeout)
 		if err != nil {
 			caller.Assign(func() {
 				cb(nil, err)
@@ -124,7 +124,7 @@ func RPCAsync[T any](caller iface.IModule, serverID uint32, req any, cb func(res
 
 func RPC[T any](serverID uint32, req any) (*T, error) {
 	b := codec.Encode(req)
-	msg, err := natsmq.Default().Conn.Request(rpcSubject(serverID), b, defaultTimeout)
+	msg, err := nmq.Default().Conn.Request(rpcSubject(serverID), b, defaultTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func RPC[T any](serverID uint32, req any) (*T, error) {
 func AnyRPCAsync[T any](caller iface.IModule, group string, req any, cb func(resp *T, err error)) {
 	b := codec.Encode(req)
 	conc.Go(func() {
-		msg, err := natsmq.Default().Conn.Request(anyRPCSubject(group), b, defaultTimeout)
+		msg, err := nmq.Default().Conn.Request(anyRPCSubject(group), b, defaultTimeout)
 		if err != nil {
 			caller.Assign(func() {
 				cb(nil, err)
@@ -180,7 +180,7 @@ func AnyRPCAsync[T any](caller iface.IModule, group string, req any, cb func(res
 
 func AnyRPC[T any](group string, req any) (*T, error) {
 	b := codec.Encode(req)
-	msg, err := natsmq.Default().Conn.Request(anyRPCSubject(group), b, defaultTimeout)
+	msg, err := nmq.Default().Conn.Request(anyRPCSubject(group), b, defaultTimeout)
 	if err != nil {
 		return nil, err
 	}

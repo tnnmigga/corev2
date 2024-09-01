@@ -1,4 +1,4 @@
-package natsmq
+package nmq
 
 import (
 	"time"
