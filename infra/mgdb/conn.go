@@ -31,6 +31,14 @@ type conn struct {
 	*mongo.Database
 }
 
+func Use(name string) *conn {
+	return conns[name]
+}
+
+func Default() *conn {
+	return conns["default"]
+}
+
 func initFromConf() error {
 	data := conf.Map[config]("mgdb", nil)
 	for k, v := range data {
