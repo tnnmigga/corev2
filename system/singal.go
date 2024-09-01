@@ -2,12 +2,13 @@ package system
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/tnnmigga/corev2/log"
 )
 
 var (
@@ -30,20 +31,20 @@ func WaitDone() {
 }
 
 // 等候所有由Go开辟的协程退出
-func WaitGoDone(maxWaitTime time.Duration) error {
+func WaitGoExit() {
 	cancel()
 	c := make(chan struct{}, 1)
-	timer := time.After(maxWaitTime)
+	timer := time.After(time.Minute)
 	go func() {
 		wg.Wait()
 		c <- struct{}{}
 	}()
 	select {
 	case <-c:
-		return nil
+		return
 	case <-timer:
 		// PrintCurrentGo()
-		return fmt.Errorf("wait goroutine exit timeout")
+		log.Errorf("wait goroutine exit timeout")
 	}
 }
 

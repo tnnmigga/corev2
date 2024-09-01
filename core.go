@@ -6,6 +6,7 @@ import (
 	"github.com/tnnmigga/corev2/iface"
 	"github.com/tnnmigga/corev2/log"
 	"github.com/tnnmigga/corev2/message"
+	"github.com/tnnmigga/corev2/system"
 )
 
 type App struct {
@@ -20,7 +21,7 @@ func (app *App) Append(mods ...iface.IModule) {
 	app.modules = append(app.modules, mods...)
 }
 
-func (app *App) Run() {
+func (app *App) Launch() {
 	err := message.Start()
 	if err != nil {
 		panic(err)
@@ -36,6 +37,7 @@ func (app *App) Shutdown() {
 			log.Errorf("module exit error %v", err)
 		}
 	}
+	system.WaitGoExit()
 }
 
 func (app *App) waitMsgHandle() {
