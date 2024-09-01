@@ -53,7 +53,11 @@ func createOrUpdateStream() error {
 
 func consumeMsg(msg jetstream.Msg) {
 	b := msg.Data()
-	defer msg.Ack()
+	err := msg.Ack()
+	if err != nil {
+		log.Error(err)
+		return
+	}
 	data, err := codec.Decode(b)
 	if err != nil {
 		log.Error(err)
