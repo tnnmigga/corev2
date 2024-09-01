@@ -2,15 +2,26 @@ package message
 
 import (
 	fmt "fmt"
+	"reflect"
 	"time"
 
 	"github.com/mohae/deepcopy"
+	"github.com/tnnmigga/corev2/conf"
 	"github.com/tnnmigga/corev2/utils"
 )
 
 const (
 	defaultTimeout = time.Second * 10
+	defaultMaxMsgs = 10000000
 )
+
+func streamName() string {
+	return fmt.Sprintf("stream-cast-%d", conf.ServerID)
+}
+
+func consumerName() string {
+	return fmt.Sprintf("consumer-%d", conf.ServerID)
+}
 
 func castSubject(serverID uint32) string {
 	return fmt.Sprintf("cast.%d", serverID)
@@ -24,7 +35,7 @@ func broadcastSubject(group string) string {
 	return fmt.Sprintf("broadcast.%s", group)
 }
 
-func randomCastSubject(group string) string {
+func anycastSubject(group string) string {
 	return fmt.Sprintf("randomcast.%s", group)
 }
 
@@ -32,7 +43,7 @@ func rpcSubject(serverID uint32) string {
 	return fmt.Sprintf("rpc.%d", serverID)
 }
 
-func randomRpcSubject(group string) string {
+func anyRPCSubject(group string) string {
 	return fmt.Sprintf("randomrpc.%s", group)
 }
 
@@ -69,13 +80,18 @@ func (ctx *RPCContext) Return(resp any, err error) {
 	ctx.cb(resp, err)
 }
 
-func (ctx *RPCContext) wait() error {
+func (ctx *RPCContext) exec() (any, error) {
+	subs, ok := subMap[reflect.TypeOf(ctx.req)]
+	if !ok {
+		return nil, fmt.Errorf("localCall callee not fuound %v", utils.TypeName(ctx.req))
+	}
+	subs[0].Assign(ctx)
 	timeout := time.NewTimer(defaultTimeout)
 	defer timeout.Stop()
 	select {
 	case <-ctx.sign:
-		return nil
+		return ctx.resp, ctx.err
 	case <-timeout.C:
-		return fmt.Errorf("request %v timeout", utils.TypeName(ctx.req))
+		return nil, fmt.Errorf("localCall %v timeout", utils.TypeName(ctx.req))
 	}
 }

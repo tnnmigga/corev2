@@ -23,23 +23,23 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-type RPCResponse struct {
+type RPCResult struct {
 	Data []byte `protobuf:"bytes,1,opt,name=Data,proto3" json:"Data,omitempty"`
 	Err  string `protobuf:"bytes,2,opt,name=Err,proto3" json:"Err,omitempty"`
 }
 
-func (m *RPCResponse) Reset()         { *m = RPCResponse{} }
-func (m *RPCResponse) String() string { return proto.CompactTextString(m) }
-func (*RPCResponse) ProtoMessage()    {}
-func (*RPCResponse) Descriptor() ([]byte, []int) {
+func (m *RPCResult) Reset()         { *m = RPCResult{} }
+func (m *RPCResult) String() string { return proto.CompactTextString(m) }
+func (*RPCResult) ProtoMessage()    {}
+func (*RPCResult) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e9aee8707d5a25b8, []int{0}
 }
-func (m *RPCResponse) XXX_Unmarshal(b []byte) error {
+func (m *RPCResult) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *RPCResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *RPCResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_RPCResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_RPCResult.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -49,151 +49,53 @@ func (m *RPCResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return b[:n], nil
 	}
 }
-func (m *RPCResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RPCResponse.Merge(m, src)
+func (m *RPCResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RPCResult.Merge(m, src)
 }
-func (m *RPCResponse) XXX_Size() int {
+func (m *RPCResult) XXX_Size() int {
 	return m.Size()
 }
-func (m *RPCResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_RPCResponse.DiscardUnknown(m)
+func (m *RPCResult) XXX_DiscardUnknown() {
+	xxx_messageInfo_RPCResult.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_RPCResponse proto.InternalMessageInfo
+var xxx_messageInfo_RPCResult proto.InternalMessageInfo
 
-func (m *RPCResponse) GetData() []byte {
+func (m *RPCResult) GetData() []byte {
 	if m != nil {
 		return m.Data
 	}
 	return nil
 }
 
-func (m *RPCResponse) GetErr() string {
+func (m *RPCResult) GetErr() string {
 	if m != nil {
 		return m.Err
 	}
 	return ""
 }
 
-type RPCRequest struct {
-}
-
-func (m *RPCRequest) Reset()         { *m = RPCRequest{} }
-func (m *RPCRequest) String() string { return proto.CompactTextString(m) }
-func (*RPCRequest) ProtoMessage()    {}
-func (*RPCRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e9aee8707d5a25b8, []int{1}
-}
-func (m *RPCRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *RPCRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_RPCRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *RPCRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RPCRequest.Merge(m, src)
-}
-func (m *RPCRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *RPCRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_RPCRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RPCRequest proto.InternalMessageInfo
-
-type StreamPackage struct {
-	Header map[string]string `protobuf:"bytes,1,rep,name=Header,proto3" json:"Header,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	Data   []byte            `protobuf:"bytes,2,opt,name=Data,proto3" json:"Data,omitempty"`
-}
-
-func (m *StreamPackage) Reset()         { *m = StreamPackage{} }
-func (m *StreamPackage) String() string { return proto.CompactTextString(m) }
-func (*StreamPackage) ProtoMessage()    {}
-func (*StreamPackage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e9aee8707d5a25b8, []int{2}
-}
-func (m *StreamPackage) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *StreamPackage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_StreamPackage.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *StreamPackage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StreamPackage.Merge(m, src)
-}
-func (m *StreamPackage) XXX_Size() int {
-	return m.Size()
-}
-func (m *StreamPackage) XXX_DiscardUnknown() {
-	xxx_messageInfo_StreamPackage.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_StreamPackage proto.InternalMessageInfo
-
-func (m *StreamPackage) GetHeader() map[string]string {
-	if m != nil {
-		return m.Header
-	}
-	return nil
-}
-
-func (m *StreamPackage) GetData() []byte {
-	if m != nil {
-		return m.Data
-	}
-	return nil
-}
-
 func init() {
-	proto.RegisterType((*RPCResponse)(nil), "pb.RPCResponse")
-	proto.RegisterType((*RPCRequest)(nil), "pb.RPCRequest")
-	proto.RegisterType((*StreamPackage)(nil), "pb.StreamPackage")
-	proto.RegisterMapType((map[string]string)(nil), "pb.StreamPackage.HeaderEntry")
+	proto.RegisterType((*RPCResult)(nil), "pb.RPCResult")
 }
 
 func init() { proto.RegisterFile("bus.proto", fileDescriptor_e9aee8707d5a25b8) }
 
 var fileDescriptor_e9aee8707d5a25b8 = []byte{
-	// 260 bytes of a gzipped FileDescriptorProto
+	// 154 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4c, 0x2a, 0x2d, 0xd6,
 	0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x2a, 0x48, 0x92, 0x12, 0x49, 0xcf, 0x4f, 0xcf, 0x07,
-	0x73, 0xf5, 0x41, 0x2c, 0x88, 0x8c, 0x92, 0x31, 0x17, 0x77, 0x50, 0x80, 0x73, 0x50, 0x6a, 0x71,
-	0x41, 0x7e, 0x5e, 0x71, 0xaa, 0x90, 0x10, 0x17, 0x8b, 0x4b, 0x62, 0x49, 0xa2, 0x04, 0xa3, 0x02,
-	0xa3, 0x06, 0x4f, 0x10, 0x98, 0x2d, 0x24, 0xc0, 0xc5, 0xec, 0x5a, 0x54, 0x24, 0xc1, 0xa4, 0xc0,
-	0xa8, 0xc1, 0x19, 0x04, 0x62, 0x2a, 0xf1, 0x70, 0x71, 0x81, 0x35, 0x15, 0x96, 0xa6, 0x16, 0x97,
-	0x28, 0x4d, 0x65, 0xe4, 0xe2, 0x0d, 0x2e, 0x29, 0x4a, 0x4d, 0xcc, 0x0d, 0x48, 0x4c, 0xce, 0x4e,
-	0x4c, 0x4f, 0x15, 0x32, 0xe5, 0x62, 0xf3, 0x48, 0x4d, 0x4c, 0x49, 0x2d, 0x92, 0x60, 0x54, 0x60,
-	0xd6, 0xe0, 0x36, 0x92, 0xd5, 0x2b, 0x48, 0xd2, 0x43, 0x51, 0xa2, 0x07, 0x91, 0x77, 0xcd, 0x2b,
-	0x29, 0xaa, 0x0c, 0x82, 0x2a, 0x86, 0x5b, 0xce, 0x84, 0xb0, 0x5c, 0xca, 0x92, 0x8b, 0x1b, 0x49,
-	0x29, 0xc8, 0x2d, 0xd9, 0xa9, 0x95, 0x60, 0xe7, 0x71, 0x06, 0x81, 0x98, 0x42, 0x22, 0x5c, 0xac,
-	0x65, 0x89, 0x39, 0xa5, 0xa9, 0x50, 0xf7, 0x41, 0x38, 0x56, 0x4c, 0x16, 0x8c, 0x4e, 0x06, 0x17,
-	0x1e, 0xca, 0x31, 0x9c, 0x78, 0x24, 0xc7, 0x78, 0xe1, 0x91, 0x1c, 0xe3, 0x83, 0x47, 0x72, 0x8c,
-	0x13, 0x1e, 0xcb, 0x31, 0xcc, 0x78, 0x2c, 0xc7, 0x70, 0xe1, 0xb1, 0x1c, 0xc3, 0x8d, 0xc7, 0x72,
-	0x0c, 0x51, 0x7c, 0xc9, 0xf9, 0x45, 0xa9, 0x65, 0x46, 0xfa, 0xb9, 0xa9, 0xc5, 0xc5, 0x89, 0xe9,
-	0xa9, 0x49, 0x6c, 0xe0, 0x30, 0x31, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0x50, 0x40, 0xa0, 0x62,
-	0x3a, 0x01, 0x00, 0x00,
+	0x73, 0xf5, 0x41, 0x2c, 0x88, 0x8c, 0x92, 0x21, 0x17, 0x67, 0x50, 0x80, 0x73, 0x50, 0x6a, 0x71,
+	0x69, 0x4e, 0x89, 0x90, 0x10, 0x17, 0x8b, 0x4b, 0x62, 0x49, 0xa2, 0x04, 0xa3, 0x02, 0xa3, 0x06,
+	0x4f, 0x10, 0x98, 0x2d, 0x24, 0xc0, 0xc5, 0xec, 0x5a, 0x54, 0x24, 0xc1, 0xa4, 0xc0, 0xa8, 0xc1,
+	0x19, 0x04, 0x62, 0x3a, 0x19, 0x5c, 0x78, 0x28, 0xc7, 0x70, 0xe2, 0x91, 0x1c, 0xe3, 0x85, 0x47,
+	0x72, 0x8c, 0x0f, 0x1e, 0xc9, 0x31, 0x4e, 0x78, 0x2c, 0xc7, 0x30, 0xe3, 0xb1, 0x1c, 0xc3, 0x85,
+	0xc7, 0x72, 0x0c, 0x37, 0x1e, 0xcb, 0x31, 0x44, 0xf1, 0x25, 0xe7, 0x17, 0xa5, 0x96, 0x19, 0xe9,
+	0xe7, 0xa6, 0x16, 0x17, 0x27, 0xa6, 0xa7, 0x26, 0xb1, 0x81, 0xed, 0x32, 0x06, 0x04, 0x00, 0x00,
+	0xff, 0xff, 0xcd, 0x7b, 0x3f, 0xd0, 0x92, 0x00, 0x00, 0x00,
 }
 
-func (m *RPCResponse) Marshal() (dAtA []byte, err error) {
+func (m *RPCResult) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -203,12 +105,12 @@ func (m *RPCResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *RPCResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *RPCResult) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *RPCResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *RPCResult) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -230,78 +132,6 @@ func (m *RPCResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *RPCRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *RPCRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *RPCRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
-func (m *StreamPackage) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *StreamPackage) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *StreamPackage) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Data) > 0 {
-		i -= len(m.Data)
-		copy(dAtA[i:], m.Data)
-		i = encodeVarintBus(dAtA, i, uint64(len(m.Data)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Header) > 0 {
-		for k := range m.Header {
-			v := m.Header[k]
-			baseI := i
-			i -= len(v)
-			copy(dAtA[i:], v)
-			i = encodeVarintBus(dAtA, i, uint64(len(v)))
-			i--
-			dAtA[i] = 0x12
-			i -= len(k)
-			copy(dAtA[i:], k)
-			i = encodeVarintBus(dAtA, i, uint64(len(k)))
-			i--
-			dAtA[i] = 0xa
-			i = encodeVarintBus(dAtA, i, uint64(baseI-i))
-			i--
-			dAtA[i] = 0xa
-		}
-	}
-	return len(dAtA) - i, nil
-}
-
 func encodeVarintBus(dAtA []byte, offset int, v uint64) int {
 	offset -= sovBus(v)
 	base := offset
@@ -313,7 +143,7 @@ func encodeVarintBus(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *RPCResponse) Size() (n int) {
+func (m *RPCResult) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -330,43 +160,13 @@ func (m *RPCResponse) Size() (n int) {
 	return n
 }
 
-func (m *RPCRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
-func (m *StreamPackage) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if len(m.Header) > 0 {
-		for k, v := range m.Header {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovBus(uint64(len(k))) + 1 + len(v) + sovBus(uint64(len(v)))
-			n += mapEntrySize + 1 + sovBus(uint64(mapEntrySize))
-		}
-	}
-	l = len(m.Data)
-	if l > 0 {
-		n += 1 + l + sovBus(uint64(l))
-	}
-	return n
-}
-
 func sovBus(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozBus(x uint64) (n int) {
 	return sovBus(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *RPCResponse) Unmarshal(dAtA []byte) error {
+func (m *RPCResult) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -389,10 +189,10 @@ func (m *RPCResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: RPCResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: RPCResult: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: RPCResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: RPCResult: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -460,273 +260,6 @@ func (m *RPCResponse) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Err = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipBus(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthBus
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthBus
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *RPCRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowBus
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: RPCRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: RPCRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipBus(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthBus
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthBus
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *StreamPackage) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowBus
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: StreamPackage: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: StreamPackage: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Header", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowBus
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthBus
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthBus
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Header == nil {
-				m.Header = make(map[string]string)
-			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowBus
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowBus
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthBus
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthBus
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowBus
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthBus
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthBus
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipBus(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if skippy < 0 {
-						return ErrInvalidLengthBus
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.Header[mapkey] = mapvalue
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowBus
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthBus
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthBus
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Data = append(m.Data[:0], dAtA[iNdEx:postIndex]...)
-			if m.Data == nil {
-				m.Data = []byte{}
-			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

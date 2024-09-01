@@ -7,6 +7,8 @@ type IModule interface {
 	Handle(mType reflect.Type, h func(any))
 	RegisterRPC(mType reflect.Type, rpc func(IRPCCtx))
 	Assign(any)
+	Done() bool
+	Exit() error
 }
 
 type IRPCCtx interface {

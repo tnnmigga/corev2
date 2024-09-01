@@ -1,6 +1,7 @@
 package message
 
 import (
+	"errors"
 	fmt "fmt"
 	"reflect"
 
@@ -70,9 +71,9 @@ func Broadcast(group string, msg any) error {
 }
 
 // 随机投递到一个分组下的某个进程
-func Randomcast(group string, msg any) error {
+func Anycast(group string, msg any) error {
 	b := codec.Encode(msg)
-	err := natsmq.Default().Publish(randomCastSubject(group), b)
+	err := natsmq.Default().Publish(anycastSubject(group), b)
 	if err != nil {
 		log.Error(err)
 	}
@@ -95,17 +96,23 @@ func RPCAsync[T any](caller iface.IModule, serverID uint32, req any, cb func(res
 			})
 			return
 		}
+		if errs := msg.Header.Values("err"); len(errs) > 0 {
+			caller.Assign(func() {
+				cb(nil, errors.New(errs[0]))
+			})
+			return
+		}
 		result, err := codec.Decode(msg.Data)
 		if err != nil {
 			caller.Assign(func() {
-				cb(nil, fmt.Errorf("RPC response decode error: %v", err))
+				cb(nil, fmt.Errorf("RPCAsync response decode error: %v", err))
 			})
 			return
 		}
 		data, ok := conv.Pointer[T](result)
 		if !ok {
 			caller.Assign(func() {
-				cb(nil, fmt.Errorf("RPC response type error: %v", utils.TypeName(result)))
+				cb(nil, fmt.Errorf("RPCAsync response type error: %v", utils.TypeName(result)))
 			})
 			return
 		}
@@ -121,6 +128,9 @@ func RPC[T any](serverID uint32, req any) (*T, error) {
 	if err != nil {
 		return nil, err
 	}
+	if errs := msg.Header.Values("err"); len(errs) > 0 {
+		return nil, errors.New(errs[0])
+	}
 	result, err := codec.Decode(msg.Data)
 	if err != nil {
 		return nil, fmt.Errorf("RPC response decode error: %v", err)
@@ -132,27 +142,33 @@ func RPC[T any](serverID uint32, req any) (*T, error) {
 	return data, err
 }
 
-func RandomRPCAsync[T any](caller iface.IModule, group string, req any, cb func(resp *T, err error)) {
+func AnyRPCAsync[T any](caller iface.IModule, group string, req any, cb func(resp *T, err error)) {
 	b := codec.Encode(req)
 	conc.Go(func() {
-		msg, err := natsmq.Default().Conn.Request(randomRpcSubject(group), b, defaultTimeout)
+		msg, err := natsmq.Default().Conn.Request(anyRPCSubject(group), b, defaultTimeout)
 		if err != nil {
 			caller.Assign(func() {
 				cb(nil, err)
 			})
 			return
 		}
+		if errs := msg.Header.Values("err"); len(errs) > 0 {
+			caller.Assign(func() {
+				cb(nil, errors.New(errs[0]))
+			})
+			return
+		}
 		result, err := codec.Decode(msg.Data)
 		if err != nil {
 			caller.Assign(func() {
-				cb(nil, fmt.Errorf("RPC response decode error: %v", err))
+				cb(nil, fmt.Errorf("AnyRPCAsync response decode error: %v", err))
 			})
 			return
 		}
 		data, ok := conv.Pointer[T](result)
 		if !ok {
 			caller.Assign(func() {
-				cb(nil, fmt.Errorf("RPC response type error: %v", utils.TypeName(result)))
+				cb(nil, fmt.Errorf("AnyRPCAsync response type error: %v", utils.TypeName(result)))
 			})
 			return
 		}
@@ -162,11 +178,14 @@ func RandomRPCAsync[T any](caller iface.IModule, group string, req any, cb func(
 	})
 }
 
-func RandomRPC[T any](group string, req any) (*T, error) {
+func AnyRPC[T any](group string, req any) (*T, error) {
 	b := codec.Encode(req)
-	msg, err := natsmq.Default().Conn.Request(randomRpcSubject(group), b, defaultTimeout)
+	msg, err := natsmq.Default().Conn.Request(anyRPCSubject(group), b, defaultTimeout)
 	if err != nil {
 		return nil, err
+	}
+	if errs := msg.Header.Values("err"); len(errs) > 0 {
+		return nil, errors.New(errs[0])
 	}
 	result, err := codec.Decode(msg.Data)
 	if err != nil {
@@ -181,19 +200,11 @@ func RandomRPC[T any](group string, req any) (*T, error) {
 
 func LPC[T any](req any) (*T, error) {
 	ctx := newRPCContext(req)
-	subs, ok := subMap[reflect.TypeOf(req)]
-	if !ok {
-		return nil, fmt.Errorf("LPC callee not fuound %v", utils.TypeName(req))
-	}
-	subs[0].Assign(ctx)
-	err := ctx.wait()
+	data, err := ctx.exec()
 	if err != nil {
 		return nil, err
 	}
-	if ctx.err != nil {
-		return nil, ctx.err
-	}
-	result, ok := conv.Pointer[T](ctx.resp)
+	result, ok := conv.Pointer[T](data)
 	if !ok {
 		return nil, fmt.Errorf("LPC response type error: %v", utils.TypeName(ctx.resp))
 	}
@@ -203,36 +214,22 @@ func LPC[T any](req any) (*T, error) {
 func LPCAsync[T any](caller iface.IModule, req any, cb func(resp *T, err error)) {
 	ctx := newRPCContext(req)
 	conc.Go(func() {
-		subs, ok := subMap[reflect.TypeOf(req)]
-		if !ok {
-			caller.Assign(func() {
-				cb(nil, fmt.Errorf("LPC callee not fuound %v", utils.TypeName(req)))
-			})
-			return
-		}
-		subs[0].Assign(ctx)
-		err := ctx.wait()
+		data, err := ctx.exec()
 		if err != nil {
 			caller.Assign(func() {
 				cb(nil, err)
 			})
 			return
 		}
-		if ctx.err != nil {
-			caller.Assign(func() {
-				cb(nil, ctx.err)
-			})
-			return
-		}
-		data, ok := conv.Pointer[T](ctx.resp)
+		result, ok := conv.Pointer[T](data)
 		if !ok {
 			caller.Assign(func() {
-				cb(nil, fmt.Errorf("LPC response type error: %v", utils.TypeName(ctx.resp)))
+				cb(nil, fmt.Errorf("LPCAsync response type error: %v", utils.TypeName(ctx.resp)))
 			})
 			return
 		}
 		caller.Assign(func() {
-			cb(data, nil)
+			cb(result, nil)
 		})
 	})
 }

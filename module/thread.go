@@ -2,15 +2,20 @@ package module
 
 import (
 	"reflect"
+	"sync/atomic"
+	"time"
 
 	"github.com/tnnmigga/corev2/conc"
 	"github.com/tnnmigga/corev2/iface"
 	"github.com/tnnmigga/corev2/log"
+	"github.com/tnnmigga/corev2/utils"
 )
 
 type eventLoopModule struct {
 	basic
-	mq chan any
+	mq      chan any
+	pending atomic.Int32
+	wg      utils.WaitGroupWithTimeout
 }
 
 // 单线程异步 事件循环
@@ -24,8 +29,11 @@ func NewEventLoop(name string, mqLen int) iface.IModule {
 		},
 	}
 	conc.Go(func() {
+		defer m.wg.Done()
 		for req := range m.mq {
+			m.pending.Add(1)
 			m.dispatch(req)
+			m.pending.Add(-1)
 		}
 	})
 	return m
@@ -39,8 +47,18 @@ func (m *eventLoopModule) Assign(msg any) {
 	}
 }
 
+func (m *eventLoopModule) Done() bool {
+	return len(m.mq) == 0 && m.pending.Load() == 0
+}
+
+func (m *eventLoopModule) Exit() error {
+	close(m.mq)
+	return m.wg.WaitWithTimeout(time.Minute)
+}
+
 type concurrencyModule struct {
 	basic
+	pending atomic.Int32
 }
 
 // 每个请求一个goroutine执行
@@ -60,14 +78,26 @@ func (m *concurrencyModule) Name() string {
 }
 
 func (m *concurrencyModule) Assign(msg any) {
+	m.pending.Add(1)
 	conc.Go(func() {
+		defer m.pending.Add(-1)
 		m.dispatch(msg)
 	})
 }
 
+func (m *concurrencyModule) Done() bool {
+	return m.pending.Load() == 0
+}
+
+func (m *concurrencyModule) Exit() error {
+	return nil
+}
+
 type threadPoolModule struct {
 	basic
-	mq chan any
+	mq      chan any
+	wg      utils.WaitGroupWithTimeout
+	pending atomic.Int32
 }
 
 // 线程池模式
@@ -81,9 +111,13 @@ func NewThreadPool(name string, mqLen int, goNum int) iface.IModule {
 		},
 	}
 	for i := 0; i < goNum; i++ {
+		m.wg.Add(1)
 		conc.Go(func() {
+			defer m.wg.Done()
 			for req := range m.mq {
+				m.pending.Add(1)
 				m.dispatch(req)
+				m.pending.Add(-1)
 			}
 		})
 	}
@@ -98,28 +132,11 @@ func (m *threadPoolModule) Assign(msg any) {
 	}
 }
 
-// func WaitMsgHandle(timeout ...time.Duration) {
-// 	if len(timeout) == 0 {
-// 		timeout = append(timeout, time.Minute)
-// 	}
-// 	const interval = 100 * time.Millisecond
-// 	count := int(timeout[0] / interval)
-// 	for i := 0; i < count; i++ {
-// 		flag := true
-// 		for _, m := range modules {
-// 			if len(m.mq) != 0 {
-// 				flag = false
-// 				break
-// 			}
-// 		}
-// 		if flag {
-// 			return
-// 		}
-// 		time.Sleep(interval)
-// 	}
-// 	for _, m := range modules {
-// 		if len(m.mq) != 0 {
-// 			zlog.Errorf("module mq remain %d", len(m.mq))
-// 		}
-// 	}
-// }
+func (m *threadPoolModule) Done() bool {
+	return len(m.mq) == 0 && m.pending.Load() == 0
+}
+
+func (m *threadPoolModule) Exit() error {
+	close(m.mq)
+	return m.wg.WaitWithTimeout(time.Minute)
+}
