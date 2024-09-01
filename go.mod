@@ -5,7 +5,7 @@ go 1.21.4
 require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.4
-	github.com/gomodule/redigo v1.8.2
+	github.com/gomodule/redigo v1.9.2
 	github.com/procodr/monkey v0.0.0-20221102224215-28eb53c3a645
 	go.mongodb.org/mongo-driver v1.15.0
 	go.uber.org/zap v1.27.0
