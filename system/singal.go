@@ -30,7 +30,7 @@ func WaitDone() {
 	wg.Done()
 }
 
-// 等候所有由Go开辟的协程退出
+// 等候所有需要等待的协程退出
 func WaitGoExit() {
 	cancel()
 	c := make(chan struct{}, 1)
