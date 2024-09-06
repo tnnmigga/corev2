@@ -1,4 +1,4 @@
-package domain
+package domainops
 
 import "github.com/tnnmigga/corev2/iface"
 
@@ -7,22 +7,26 @@ type Root interface {
 	GetCase(index int) any
 }
 
+func RegisterCase[I any](root Root, index int, useCase I) {
+	root.PutCase(index, useCase)
+}
+
 type root struct {
 	iface.IModule
-	useCases []any
+	cases []any
 }
 
 func New(m iface.IModule, maxCaseIndex int) Root {
 	return &root{
-		IModule:  m,
-		useCases: make([]any, maxCaseIndex),
+		IModule: m,
+		cases:   make([]any, maxCaseIndex),
 	}
 }
 
 func (p *root) PutCase(caseIndex int, useCase any) {
-	p.useCases[caseIndex] = useCase
+	p.cases[caseIndex] = useCase
 }
 
 func (p *root) GetCase(caseIndex int) any {
-	return p.useCases[caseIndex]
+	return p.cases[caseIndex]
 }
