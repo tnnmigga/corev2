@@ -26,6 +26,12 @@ func (app *App) Launch() {
 	if err != nil {
 		panic(err)
 	}
+	for _, m := range app.modules {
+		err = m.Run()
+		if err != nil {
+			log.Panicf("Launch Run module %s error %v", m.Name(), err)
+		}
+	}
 }
 
 func (app *App) Shutdown() {

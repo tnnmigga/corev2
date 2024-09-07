@@ -90,13 +90,3 @@ func Panic(args ...any) {
 func Panicf(format string, args ...any) {
 	lg.Panicf(format, args...)
 }
-
-// func Fatal(args ...any) {
-// 	logger.Error(args...)
-// 	proc.Exit()
-// }
-
-// func Fatalf(format string, args ...any) {
-// 	logger.Errorf(format, args...)
-// 	proc.Exit()
-// }

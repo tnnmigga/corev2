@@ -61,6 +61,10 @@ func (m *basic) dispatch(msg any) {
 	}
 }
 
+func (m *basic) Run() error {
+	return nil
+}
+
 func Handle[T any](m iface.IModule, h func(*T)) {
 	codec.Register[T]()
 	mType := reflect.TypeOf(new(T))

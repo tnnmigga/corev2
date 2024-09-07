@@ -25,3 +25,7 @@ func (wg *WaitGroupWithTimeout) WaitWithTimeout(timeout time.Duration) error {
 		return errors.New("timeout")
 	}
 }
+
+func NowNs() time.Duration {
+	return time.Duration(time.Now().UnixNano())
+}
