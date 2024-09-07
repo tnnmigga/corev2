@@ -80,12 +80,17 @@ func RegisterRPC[T any](m iface.IModule, rpc func(req *T, resp func(any, error))
 	})
 }
 
-func Async[T any](m iface.IModule, f func() (T, error), cb func(T, error)) {
-	conc.Go(func() {
+func Async[T any](m iface.IModule, f func() (T, error), cb func(T, error), groupKey ...string) {
+	fn := func() {
 		defer utils.RecoverPanic()
 		result, err := f()
 		m.Assign(func() {
 			cb(result, err)
 		})
-	})
+	}
+	if len(groupKey) > 0 {
+		conc.GoWithGroup(groupKey[0], fn)
+	} else {
+		conc.Go(fn)
+	}
 }
