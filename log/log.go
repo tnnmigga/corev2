@@ -19,7 +19,7 @@ func init() {
 
 func Init() {
 	var logLevel zap.AtomicLevel
-	err := logLevel.UnmarshalText([]byte(conf.String("zlog.level", "debug")))
+	err := logLevel.UnmarshalText([]byte(conf.String("log.level", "debug")))
 	if err != nil {
 		panic(fmt.Errorf("log Init level error: %v", err))
 	}
@@ -28,8 +28,8 @@ func Init() {
 		Development:       false,
 		Encoding:          conf.String("log.encoding", "console"),
 		EncoderConfig:     zap.NewProductionEncoderConfig(),
-		OutputPaths:       []string{conf.String("zlog.stdout", "stdout")},
-		ErrorOutputPaths:  []string{conf.String("zlog.stderr", "stderr")},
+		OutputPaths:       []string{conf.String("log.stdout", "stdout")},
+		ErrorOutputPaths:  []string{conf.String("log.stderr", "stderr")},
 		DisableCaller:     false,
 		DisableStacktrace: true,
 	}
@@ -42,7 +42,7 @@ func Init() {
 	}
 	l, err := conf.Build(zap.AddCallerSkip(1))
 	if err != nil {
-		panic(fmt.Errorf("zlog Init conf build error: %v", err))
+		panic(fmt.Errorf("log Init conf build error: %v", err))
 	}
 	lg = l.Sugar()
 }
