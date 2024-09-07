@@ -4,11 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/tnnmigga/corev2/conc"
 	"github.com/tnnmigga/corev2/iface"
 	"github.com/tnnmigga/corev2/log"
-	"github.com/tnnmigga/corev2/message"
-	"github.com/tnnmigga/corev2/message/codec"
 	"github.com/tnnmigga/corev2/utils"
 )
 
@@ -63,38 +60,4 @@ func (m *basic) dispatch(msg any) {
 
 func (m *basic) Run() error {
 	return nil
-}
-
-func Handle[T any](m iface.IModule, h func(*T)) {
-	codec.Register[T]()
-	mType := reflect.TypeOf(new(T))
-	message.Subscribe[T](m)
-	m.Handle(mType, func(a any) {
-		h(a.(*T))
-	})
-}
-
-func RegisterRPC[T any](m iface.IModule, rpc func(req *T, resp func(any, error))) {
-	codec.Register[T]()
-	mType := reflect.TypeOf(new(T))
-	message.Subscribe[T](m)
-	m.RegisterRPC(mType, func(req iface.IRPCCtx) {
-		body := req.RPCBody()
-		rpc(body.(*T), req.Return)
-	})
-}
-
-func Async[T any](m iface.IModule, f func() (T, error), cb func(T, error), groupKey ...string) {
-	fn := func() {
-		defer utils.RecoverPanic()
-		result, err := f()
-		m.Assign(func() {
-			cb(result, err)
-		})
-	}
-	if len(groupKey) > 0 {
-		conc.GoWithGroup(groupKey[0], fn)
-	} else {
-		conc.Go(fn)
-	}
 }

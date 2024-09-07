@@ -23,6 +23,25 @@ func Subscribe[T any](m iface.IModule) {
 	subMap[mType] = append(subMap[mType], m)
 }
 
+func Handle[T any](m iface.IModule, h func(*T)) {
+	codec.Register[T]()
+	mType := reflect.TypeOf(new(T))
+	Subscribe[T](m)
+	m.Handle(mType, func(a any) {
+		h(a.(*T))
+	})
+}
+
+func RegisterRPC[T any](m iface.IModule, rpc func(req *T, resp func(any, error))) {
+	codec.Register[T]()
+	mType := reflect.TypeOf(new(T))
+	Subscribe[T](m)
+	m.RegisterRPC(mType, func(req iface.IRPCCtx) {
+		body := req.RPCBody()
+		rpc(body.(*T), req.Return)
+	})
+}
+
 // 跨进程投递消息
 func Cast(serverID uint32, msg any) error {
 	if serverID == conf.ServerID {
