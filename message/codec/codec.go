@@ -21,8 +21,10 @@ func init() {
 	msgIDToDesc = map[uint32]*MessageDescriptor{}
 }
 
+type MarshalBy byte
+
 const (
-	MarshalByGoGoProto = iota
+	MarshalByGoGoProto MarshalBy = iota
 	MarshalByBSON
 	MarshalByJSON
 )
@@ -59,11 +61,11 @@ func Register[T any]() {
 // 编码
 func Encode(msg any) []byte {
 	msgID := nameToID(utils.TypeName(msg))
-	mType := marshalType(msg)
-	bytes := Marshal(mType, msg)
+	by := marshalBy(msg)
+	bytes := Marshal(by, msg)
 	body := make([]byte, 4, len(bytes)+5)
 	binary.LittleEndian.PutUint32(body, msgID)
-	body = append(append(body, mType), bytes...)
+	body = append(append(body, byte(by)), bytes...)
 	return body
 }
 
@@ -78,13 +80,13 @@ func Decode(b []byte) (msg any, err error) {
 		return nil, fmt.Errorf("message decode msgid not found %d", msgID)
 	}
 	msg = desc.New()
-	mType := b[4]
-	err = Unmarshal(mType, b[5:], msg)
+	by := b[4]
+	err = Unmarshal(MarshalBy(by), b[5:], msg)
 	return msg, err
 }
 
 // 序列化
-func Marshal(mType byte, v any) []byte {
+func Marshal(mType MarshalBy, v any) []byte {
 	switch mType {
 	case MarshalByGoGoProto:
 		b, err := proto.Marshal(v.(proto.Message))
@@ -111,7 +113,7 @@ func Marshal(mType byte, v any) []byte {
 
 // 反序列化
 // 使用前需要提前注册
-func Unmarshal(mType byte, b []byte, addr any) error {
+func Unmarshal(mType MarshalBy, b []byte, addr any) error {
 	switch mType {
 	case MarshalByGoGoProto:
 		return proto.Unmarshal(b, addr.(proto.Message))
@@ -122,7 +124,7 @@ func Unmarshal(mType byte, b []byte, addr any) error {
 	}
 }
 
-func marshalType(v any) byte {
+func marshalBy(v any) MarshalBy {
 	if _, ok := v.(proto.Message); ok {
 		return MarshalByGoGoProto
 	}
