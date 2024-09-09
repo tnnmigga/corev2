@@ -28,6 +28,7 @@ func NewEventLoop(name string, mqLen int) iface.IModule {
 			rpcs:    map[reflect.Type]func(iface.IRPCCtx){},
 		},
 	}
+	m.wg.Add(1)
 	conc.Go(func() {
 		defer m.wg.Done()
 		for req := range m.mq {

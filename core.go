@@ -3,6 +3,7 @@ package corev2
 import (
 	"time"
 
+	"github.com/tnnmigga/corev2/conf"
 	"github.com/tnnmigga/corev2/iface"
 	"github.com/tnnmigga/corev2/log"
 	"github.com/tnnmigga/corev2/message"
@@ -32,6 +33,7 @@ func (app *App) Launch() {
 			log.Panicf("Launch Run module %s error %v", m.Name(), err)
 		}
 	}
+	log.Infof("server %d launch success", conf.ServerID)
 }
 
 func (app *App) Shutdown() {
@@ -44,6 +46,7 @@ func (app *App) Shutdown() {
 		}
 	}
 	system.WaitGoExit()
+	log.Infof("server %d shutdown success", conf.ServerID)
 }
 
 func (app *App) waitMsgHandle() {

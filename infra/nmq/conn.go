@@ -18,8 +18,7 @@ func init() {
 var conns = map[string]*natsConn{}
 
 type config struct {
-	URL    string
-	Stream bool
+	URL string
 }
 
 type natsConn struct {
@@ -32,7 +31,7 @@ func (conn *natsConn) Stream() jetstream.JetStream {
 }
 
 func initFromConf() error {
-	data := conf.Map[config]("natsmq", nil)
+	data := conf.Map[config]("nmq", nil)
 	for key, item := range data {
 		conn, err := newConn(item)
 		if err != nil {
@@ -53,7 +52,7 @@ func Default() *natsConn {
 
 func newConn(c config) (*natsConn, error) {
 	conn, err := nats.Connect(
-		conf.String(c.URL),
+		c.URL,
 		nats.RetryOnFailedConnect(true),
 		nats.MaxReconnects(10),
 		nats.ReconnectWait(time.Second),
