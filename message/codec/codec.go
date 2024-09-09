@@ -2,6 +2,7 @@ package codec
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -21,13 +22,13 @@ func init() {
 }
 
 const (
-	marshalTypeGogoproto = iota
-	marshalTypeBSON
+	MarshalByGoGoProto = iota
+	MarshalByBSON
+	MarshalByJSON
 )
 
 type MessageDescriptor struct {
 	MessageName string
-	MarshalType int
 	ReflectType reflect.Type
 }
 
@@ -37,7 +38,7 @@ func (d *MessageDescriptor) New() any {
 
 // 将消息注册到解码器
 func Register[T any]() {
-	msg := new(T)
+	var msg T
 	msgName := utils.TypeName(msg)
 	msgID := nameToID(msgName)
 	if desc, has := msgIDToDesc[msgID]; has {
@@ -45,26 +46,30 @@ func Register[T any]() {
 			log.Panicf("msgid duplicat %v %d", msgName, msgID)
 		}
 	}
+	mType := reflect.TypeOf(msg)
+	if mType.Kind() == reflect.Ptr {
+		mType = mType.Elem()
+	}
 	msgIDToDesc[msgID] = &MessageDescriptor{
 		MessageName: msgName,
-		MarshalType: marshalType(msg),
-		ReflectType: reflect.TypeOf(msg),
+		ReflectType: mType,
 	}
 }
 
 // 编码
 func Encode(msg any) []byte {
 	msgID := nameToID(utils.TypeName(msg))
-	bytes := Marshal(msg)
-	body := make([]byte, 4, len(bytes)+4)
+	mType := marshalType(msg)
+	bytes := Marshal(mType, msg)
+	body := make([]byte, 4, len(bytes)+5)
 	binary.LittleEndian.PutUint32(body, msgID)
-	body = append(body, bytes...)
+	body = append(append(body, mType), bytes...)
 	return body
 }
 
 // 解码
 func Decode(b []byte) (msg any, err error) {
-	if len(b) < 4 {
+	if len(b) < 5 {
 		return nil, fmt.Errorf("message decode len error %d", len(b))
 	}
 	msgID := binary.LittleEndian.Uint32(b)
@@ -73,44 +78,55 @@ func Decode(b []byte) (msg any, err error) {
 		return nil, fmt.Errorf("message decode msgid not found %d", msgID)
 	}
 	msg = desc.New()
-	err = Unmarshal(b[4:], msg)
+	mType := b[4]
+	err = Unmarshal(mType, b[5:], msg)
 	return msg, err
 }
 
 // 序列化
-func Marshal(v any) []byte {
-	if v0, ok := v.(proto.Message); ok {
-		b, err := proto.Marshal(v0)
+func Marshal(mType byte, v any) []byte {
+	switch mType {
+	case MarshalByGoGoProto:
+		b, err := proto.Marshal(v.(proto.Message))
+		if err != nil {
+			log.Panic(fmt.Errorf("message encode error %v", err))
+		}
+		return b
+	case MarshalByBSON:
+		b, err := bson.Marshal(v)
+		if err != nil {
+			log.Panic(fmt.Errorf("message encode error %v", err))
+		}
+		return b
+	case MarshalByJSON:
+		b, err := json.Marshal(v)
 		if err != nil {
 			log.Panic(fmt.Errorf("message encode error %v", err))
 		}
 		return b
 	}
-	b, err := bson.Marshal(v)
-	if err != nil {
-		log.Panic(fmt.Errorf("message encode error %v", err))
-	}
-	return b
+	log.Panic(fmt.Errorf("error marshal type %d", mType))
+	return nil
 }
 
 // 反序列化
 // 使用前需要提前注册
-func Unmarshal(b []byte, addr any) error {
-	switch marshalType(addr) {
-	case marshalTypeGogoproto:
+func Unmarshal(mType byte, b []byte, addr any) error {
+	switch mType {
+	case MarshalByGoGoProto:
 		return proto.Unmarshal(b, addr.(proto.Message))
-	case marshalTypeBSON:
+	case MarshalByBSON:
 		return bson.Unmarshal(b, addr)
 	default:
 		return errors.New("invalid marshal type")
 	}
 }
 
-func marshalType(v any) int {
+func marshalType(v any) byte {
 	if _, ok := v.(proto.Message); ok {
-		return marshalTypeGogoproto
+		return MarshalByGoGoProto
 	}
-	return marshalTypeBSON
+	return MarshalByBSON
 }
 
 func nameToID(msgName string) uint32 {
