@@ -24,9 +24,9 @@ func init() {
 type MarshalBy byte
 
 const (
-	MarshalByGoGoProto MarshalBy = iota
-	MarshalByBSON
-	MarshalByJSON
+	MarshalByGoGoProto MarshalBy = 1
+	MarshalByBSON      MarshalBy = 2
+	MarshalByJSON      MarshalBy = 4
 )
 
 type MessageDescriptor struct {
@@ -112,13 +112,14 @@ func Marshal(mBy MarshalBy, v any) []byte {
 }
 
 // 反序列化
-// 使用前需要提前注册
 func Unmarshal(mType MarshalBy, b []byte, addr any) error {
 	switch mType {
 	case MarshalByGoGoProto:
 		return proto.Unmarshal(b, addr.(proto.Message))
 	case MarshalByBSON:
 		return bson.Unmarshal(b, addr)
+	case MarshalByJSON:
+		return json.Unmarshal(b, addr)
 	default:
 		return errors.New("invalid marshal type")
 	}
