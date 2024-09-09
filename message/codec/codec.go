@@ -61,11 +61,11 @@ func Register[T any]() {
 // 编码
 func Encode(msg any) []byte {
 	msgID := nameToID(utils.TypeName(msg))
-	by := marshalBy(msg)
-	bytes := Marshal(by, msg)
+	mBy := marshalBy(msg)
+	bytes := Marshal(mBy, msg)
 	body := make([]byte, 4, len(bytes)+5)
 	binary.LittleEndian.PutUint32(body, msgID)
-	body = append(append(body, byte(by)), bytes...)
+	body = append(append(body, byte(mBy)), bytes...)
 	return body
 }
 
@@ -80,14 +80,14 @@ func Decode(b []byte) (msg any, err error) {
 		return nil, fmt.Errorf("message decode msgid not found %d", msgID)
 	}
 	msg = desc.New()
-	by := b[4]
-	err = Unmarshal(MarshalBy(by), b[5:], msg)
+	mBy := b[4]
+	err = Unmarshal(MarshalBy(mBy), b[5:], msg)
 	return msg, err
 }
 
 // 序列化
-func Marshal(mType MarshalBy, v any) []byte {
-	switch mType {
+func Marshal(mBy MarshalBy, v any) []byte {
+	switch mBy {
 	case MarshalByGoGoProto:
 		b, err := proto.Marshal(v.(proto.Message))
 		if err != nil {
@@ -107,7 +107,7 @@ func Marshal(mType MarshalBy, v any) []byte {
 		}
 		return b
 	}
-	log.Panic(fmt.Errorf("error marshal type %d", mType))
+	log.Panic(fmt.Errorf("error marshal type %d", mBy))
 	return nil
 }
 
