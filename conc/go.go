@@ -3,7 +3,6 @@ package conc
 import (
 	"sync"
 
-	"github.com/tnnmigga/corev2/iface"
 	"github.com/tnnmigga/corev2/system"
 	"github.com/tnnmigga/corev2/utils"
 )
@@ -92,19 +91,4 @@ func Go(fn func()) {
 // 同分组下的任务会等候上一个执行完毕后再执行
 func GoWithGroup(name string, fn func()) {
 	wkg.run(name, fn)
-}
-
-func Async[T any](m iface.IModule, f func() (T, error), cb func(T, error), groupKey ...string) {
-	fn := func() {
-		defer utils.RecoverPanic()
-		result, err := f()
-		m.Assign(func() {
-			cb(result, err)
-		})
-	}
-	if len(groupKey) > 0 {
-		GoWithGroup(groupKey[0], fn)
-	} else {
-		Go(fn)
-	}
 }
