@@ -1,63 +1,143 @@
 package basic
 
 import (
-	"fmt"
 	"reflect"
+	"sync/atomic"
+	"time"
 
+	"github.com/tnnmigga/corev2/conc"
 	"github.com/tnnmigga/corev2/iface"
 	"github.com/tnnmigga/corev2/log"
 	"github.com/tnnmigga/corev2/utils"
 )
 
-type basic struct {
-	name    string
-	handles map[reflect.Type]func(any)
-	rpcs    map[reflect.Type](func(iface.IRPCCtx))
+type eventLoopModule struct {
+	handle
+	mq      chan any
+	pending atomic.Int32
+	wg      utils.WaitGroupWithTimeout
 }
 
-func (m *basic) Name() string {
+// 单线程异步 事件循环
+func NewEventLoop(name string, mqLen int) iface.IModule {
+	m := &eventLoopModule{
+		mq: make(chan any, mqLen),
+		handle: handle{
+			name:    name,
+			handles: map[reflect.Type]func(any){},
+			rpcs:    map[reflect.Type]func(iface.IRPCCtx){},
+		},
+	}
+	m.wg.Add(1)
+	conc.Go(func() {
+		defer m.wg.Done()
+		for req := range m.mq {
+			m.pending.Add(1)
+			m.dispatch(req)
+			m.pending.Add(-1)
+		}
+	})
+	return m
+}
+
+func (m *eventLoopModule) Assign(msg any) {
+	select {
+	case m.mq <- msg:
+	default:
+		log.Errorf("modele %s mq full, lose %#v", m.name, msg)
+	}
+}
+
+func (m *eventLoopModule) Done() bool {
+	return len(m.mq) == 0 && m.pending.Load() == 0
+}
+
+func (m *eventLoopModule) Exit() error {
+	close(m.mq)
+	return m.wg.WaitWithTimeout(time.Minute)
+}
+
+type concurrencyModule struct {
+	handle
+	pending atomic.Int32
+}
+
+// 每个请求一个goroutine执行
+func NewConcurrency(name string) iface.IModule {
+	m := &concurrencyModule{
+		handle: handle{
+			name:    name,
+			handles: map[reflect.Type]func(any){},
+			rpcs:    map[reflect.Type]func(iface.IRPCCtx){},
+		},
+	}
+	return m
+}
+
+func (m *concurrencyModule) Name() string {
 	return m.name
 }
 
-func (m *basic) Handle(mType reflect.Type, h func(any)) {
-	if _, ok := m.handles[mType]; ok {
-		panic(fmt.Errorf("duplicate registration %s", mType.String()))
-	}
-	m.handles[mType] = h
+func (m *concurrencyModule) Assign(msg any) {
+	m.pending.Add(1)
+	conc.Go(func() {
+		defer m.pending.Add(-1)
+		m.dispatch(msg)
+	})
 }
 
-func (m *basic) RegisterRPC(mType reflect.Type, rpc func(iface.IRPCCtx)) {
-	if _, ok := m.rpcs[mType]; ok {
-		panic(fmt.Errorf("duplicate registration %s", mType.String()))
-	}
-	m.rpcs[mType] = rpc
+func (m *concurrencyModule) Done() bool {
+	return m.pending.Load() == 0
 }
 
-func (m *basic) dispatch(msg any) {
-	defer utils.RecoverPanic()
-	switch req := msg.(type) {
-	case func():
-		req()
-	case iface.IRPCCtx:
-		body := req.RPCBody()
-		mType := reflect.TypeOf(body)
-		rpc, ok := m.rpcs[mType]
-		if ok {
-			rpc(req)
-			return
-		}
-		log.Errorf("module %s rpc not found %s", m.name, mType.String())
-	default:
-		mType := reflect.TypeOf(msg)
-		h, ok := m.handles[mType]
-		if ok {
-			h(msg)
-			return
-		}
-		log.Errorf("module %s handle not found %s", m.name, mType.String())
-	}
-}
-
-func (m *basic) Run() error {
+func (m *concurrencyModule) Exit() error {
 	return nil
+}
+
+type goroutinePoolModule struct {
+	handle
+	mq      chan any
+	wg      utils.WaitGroupWithTimeout
+	pending atomic.Int32
+}
+
+// 线程池模式
+func NewGoPool(name string, mqLen int, goNum int) iface.IModule {
+	m := &goroutinePoolModule{
+		mq: make(chan any, mqLen),
+		handle: handle{
+			name:    name,
+			handles: map[reflect.Type]func(any){},
+			rpcs:    map[reflect.Type]func(iface.IRPCCtx){},
+		},
+	}
+	for i := 0; i < goNum; i++ {
+		m.wg.Add(1)
+		conc.Go(func() {
+			defer m.wg.Done()
+			for req := range m.mq {
+				m.pending.Add(1)
+				m.dispatch(req)
+				m.pending.Add(-1)
+			}
+		})
+	}
+	return m
+}
+
+func (m *goroutinePoolModule) Assign(msg any) {
+	select {
+	case m.mq <- msg:
+	default:
+		log.Errorf("modele %s mq full, lose %#v", m.name, msg)
+	}
+}
+
+func (m *goroutinePoolModule) Done() bool {
+	return len(m.mq) == 0 && m.pending.Load() == 0
+}
+
+func (m *goroutinePoolModule) Exit() error {
+	close(m.mq)
+	return m.wg.WaitWithTimeout(time.Minute)
 }
