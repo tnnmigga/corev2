@@ -54,7 +54,7 @@ func WaitExitSignal() os.Signal {
 }
 
 // 运行时故障触发进程退出流程
-func Abort() {
+func Exit() {
 	select {
 	case sign <- syscall.SIGQUIT:
 	default:
