@@ -44,7 +44,7 @@ func (m *eventLoopModule) Assign(msg any) {
 	select {
 	case m.mq <- msg:
 	default:
-		log.Errorf("modele %s mq full, lose %#v", m.name, msg)
+		log.Errorf("modele %s mq full, msg %#v", m.name, msg)
 	}
 }
 
