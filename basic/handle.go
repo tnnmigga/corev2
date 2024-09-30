@@ -10,9 +10,9 @@ import (
 )
 
 type handle struct {
-	name    string
-	handles map[reflect.Type]func(any)
-	rpcs    map[reflect.Type](func(iface.IRPCCtx))
+	name      string
+	handleFns map[reflect.Type]func(any)
+	respFns   map[reflect.Type](func(iface.IReqCtx))
 }
 
 func (m *handle) Name() string {
@@ -20,17 +20,17 @@ func (m *handle) Name() string {
 }
 
 func (m *handle) Handle(mType reflect.Type, h func(any)) {
-	if _, ok := m.handles[mType]; ok {
+	if _, ok := m.handleFns[mType]; ok {
 		panic(fmt.Errorf("duplicate registration %s", mType.String()))
 	}
-	m.handles[mType] = h
+	m.handleFns[mType] = h
 }
 
-func (m *handle) RegisterRPC(mType reflect.Type, rpc func(iface.IRPCCtx)) {
-	if _, ok := m.rpcs[mType]; ok {
+func (m *handle) Response(mType reflect.Type, h func(iface.IReqCtx)) {
+	if _, ok := m.respFns[mType]; ok {
 		panic(fmt.Errorf("duplicate registration %s", mType.String()))
 	}
-	m.rpcs[mType] = rpc
+	m.respFns[mType] = h
 }
 
 func (m *handle) dispatch(msg any) {
@@ -38,18 +38,18 @@ func (m *handle) dispatch(msg any) {
 	switch req := msg.(type) {
 	case func():
 		req()
-	case iface.IRPCCtx:
-		body := req.RPCBody()
+	case iface.IReqCtx:
+		body := req.ReqBody()
 		mType := reflect.TypeOf(body)
-		rpc, ok := m.rpcs[mType]
+		h, ok := m.respFns[mType]
 		if ok {
-			rpc(req)
+			h(req)
 			return
 		}
-		log.Errorf("module %s rpc not found %s", m.name, mType.String())
+		log.Errorf("module %s request not found %s", m.name, mType.String())
 	default:
 		mType := reflect.TypeOf(msg)
-		h, ok := m.handles[mType]
+		h, ok := m.handleFns[mType]
 		if ok {
 			h(msg)
 			return

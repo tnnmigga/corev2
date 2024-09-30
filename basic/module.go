@@ -23,9 +23,9 @@ func NewEventLoop(name string, mqLen int) iface.IModule {
 	m := &eventLoopModule{
 		mq: make(chan any, mqLen),
 		handle: handle{
-			name:    name,
-			handles: map[reflect.Type]func(any){},
-			rpcs:    map[reflect.Type]func(iface.IRPCCtx){},
+			name:      name,
+			handleFns: map[reflect.Type]func(any){},
+			respFns:   map[reflect.Type]func(iface.IReqCtx){},
 		},
 	}
 	m.wg.Add(1)
@@ -66,9 +66,9 @@ type concurrencyModule struct {
 func NewConcurrency(name string) iface.IModule {
 	m := &concurrencyModule{
 		handle: handle{
-			name:    name,
-			handles: map[reflect.Type]func(any){},
-			rpcs:    map[reflect.Type]func(iface.IRPCCtx){},
+			name:      name,
+			handleFns: map[reflect.Type]func(any){},
+			respFns:   map[reflect.Type]func(iface.IReqCtx){},
 		},
 	}
 	return m
@@ -106,9 +106,9 @@ func NewGoPool(name string, mqLen int, goNum int) iface.IModule {
 	m := &goroutinePoolModule{
 		mq: make(chan any, mqLen),
 		handle: handle{
-			name:    name,
-			handles: map[reflect.Type]func(any){},
-			rpcs:    map[reflect.Type]func(iface.IRPCCtx){},
+			name:      name,
+			handleFns: map[reflect.Type]func(any){},
+			respFns:   map[reflect.Type]func(iface.IReqCtx){},
 		},
 	}
 	for i := 0; i < goNum; i++ {

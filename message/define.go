@@ -1,6 +1,7 @@
 package message
 
 import (
+	"context"
 	fmt "fmt"
 	"reflect"
 	"time"
@@ -36,62 +37,52 @@ func broadcastSubject(group string) string {
 }
 
 func anycastSubject(group string) string {
-	return fmt.Sprintf("randomcast.%s", group)
+	return fmt.Sprintf("anycast.%s", group)
 }
 
-func rpcSubject(serverID uint32) string {
-	return fmt.Sprintf("rpc.%d", serverID)
+func requestSubject(serverID uint32) string {
+	return fmt.Sprintf("request.%d", serverID)
 }
 
-func anyRPCSubject(group string) string {
-	return fmt.Sprintf("randomrpc.%s", group)
+func requestAnySubject(group string) string {
+	return fmt.Sprintf("requestany.%s", group)
 }
 
-type RPCContext struct {
-	req  any
-	resp any
-	err  error
-	cb   func(resp any, err error)
-	sign chan any
+type ReqCtx struct {
+	context.Context
+	cancel func()
+	req    any
+	resp   any
+	err    error
 }
 
-func newRPCContext(req any) *RPCContext {
-	ctx := &RPCContext{
-		req:  deepcopy.Copy(req),
-		sign: make(chan any, 1),
+func newReqCtx(req any) *ReqCtx {
+	ctx := &ReqCtx{
+		req: deepcopy.Copy(req),
 	}
-	ctx.cb = func(_resp any, _err error) {
-		ctx.err = _err
-		if _err != nil {
-			ctx.sign <- struct{}{}
-			return
-		}
-		ctx.resp = _resp
-		ctx.sign <- struct{}{}
-	}
+	ctx.Context, ctx.cancel = context.WithTimeout(context.Background(), defaultTimeout)
 	return ctx
 }
 
-func (ctx *RPCContext) RPCBody() any {
+func (ctx *ReqCtx) ReqBody() any {
 	return ctx.req
 }
 
-func (ctx *RPCContext) Return(resp any, err error) {
-	ctx.cb(resp, err)
+func (ctx *ReqCtx) Return(resp any, err error) {
+	ctx.resp = resp
+	ctx.err = err
+	ctx.cancel()
 }
 
-func (ctx *RPCContext) exec() (any, error) {
-	subs, ok := subMap[reflect.TypeOf(ctx.req)]
+func (ctx *ReqCtx) do() (any, error) {
+	subs, ok := subMap[reflect.TypeOf(ctx.ReqBody())]
 	if !ok {
-		return nil, fmt.Errorf("localCall callee not fuound %v", utils.TypeName(ctx.req))
+		return nil, fmt.Errorf("callee not fuound %v", utils.TypeName(ctx.ReqBody()))
 	}
 	subs[0].Assign(ctx)
-	timeout := time.NewTimer(defaultTimeout)
-	defer timeout.Stop()
-	select {
-	case <-ctx.sign:
-		return ctx.resp, ctx.err
-	case <-timeout.C:
-		return nil, fmt.Errorf("localCall %v timeout", utils.TypeName(ctx.req))
+	<-ctx.Done()
+	if ctx.Err() != nil {
+		return nil, fmt.Errorf("do %v error %v", utils.TypeName(ctx.req), ctx.Err())
 	}
+	return ctx.resp, ctx.err
 }

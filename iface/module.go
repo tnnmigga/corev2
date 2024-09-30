@@ -1,18 +1,22 @@
 package iface
 
-import "reflect"
+import (
+	"context"
+	"reflect"
+)
 
 type IModule interface {
 	Name() string
 	Handle(mType reflect.Type, h func(any))
-	RegisterRPC(mType reflect.Type, rpc func(IRPCCtx))
+	Response(mType reflect.Type, h func(IReqCtx))
 	Assign(any)
 	Run() error
 	Exit() error
 	Done() bool
 }
 
-type IRPCCtx interface {
-	RPCBody() any
+type IReqCtx interface {
+	context.Context
+	ReqBody() any
 	Return(any, error)
 }

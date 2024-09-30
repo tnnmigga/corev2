@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -15,6 +16,9 @@ import (
 
 func init() {
 	fname := "configs.jsonc"
+	if idx := slices.Index(os.Args, "-c"); idx != -1 {
+		fname = os.Args[idx+1]
+	}
 	b := loadLocalFile(fname)
 	if b == nil {
 		return

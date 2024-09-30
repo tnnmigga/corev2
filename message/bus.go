@@ -18,31 +18,31 @@ import (
 
 var subMap = map[reflect.Type][]iface.IModule{}
 
-func Subscribe[T any](m iface.IModule) {
-	mType := reflect.TypeOf(new(T))
-	subMap[mType] = append(subMap[mType], m)
-}
-
 func Handle[T any](m iface.IModule, h func(*T)) {
 	codec.Register[T]()
 	mType := reflect.TypeOf(new(T))
-	Subscribe[T](m)
+	subscribe[T](m)
 	m.Handle(mType, func(a any) {
 		h(a.(*T))
 	})
 }
 
-func RegisterRPC[T any](m iface.IModule, rpc func(req *T, resp func(any, error))) {
+func Response[T any](m iface.IModule, h func(req *T, resp func(any, error))) {
 	codec.Register[T]()
 	mType := reflect.TypeOf(new(T))
-	Subscribe[T](m)
-	m.RegisterRPC(mType, func(req iface.IRPCCtx) {
-		body := req.RPCBody()
-		rpc(body.(*T), req.Return)
+	subscribe[T](m)
+	m.Response(mType, func(req iface.IReqCtx) {
+		body := req.ReqBody()
+		h(body.(*T), req.Return)
 	})
 }
 
-// 跨进程投递消息
+func subscribe[T any](m iface.IModule) {
+	mType := reflect.TypeOf(new(T))
+	subMap[mType] = append(subMap[mType], m)
+}
+
+// 投递消息
 func Cast(serverID uint32, msg any) error {
 	if serverID == conf.ServerID {
 		Delivery(msg)
@@ -99,51 +99,50 @@ func Anycast(group string, msg any) error {
 	return err
 }
 
-// RPCAsync 跨协程/进程调用
-// caller: 为调用者模块 也是回调函数的执行者
-// serverID: 目标参数 可以通过msgbus.ServerID()指定某个特定的进程或通过msgbus.ServerType()在某类进程中随机一个
-// 调用本地使用msgbus.Local()或msgbus.ServerID(conf.ServerID)
-// req: 请求参数
-// cb: 回调函数 由调用方模块线程执行
-func RPCAsync[T any](caller iface.IModule, serverID uint32, req any, cb func(resp *T, err error)) {
+func Request[T any](serverID uint32, req any) (*T, error) {
+	if serverID == conf.ServerID {
+		return requestLocal[T](req)
+	}
+	b := codec.Encode(req)
+	return request[T](requestSubject(serverID), b)
+}
+
+func RequestAsync[T any](caller iface.IModule, serverID uint32, req any, cb func(resp *T, err error)) {
+	if serverID == conf.ServerID {
+		conc.Go(func() {
+			resp, err := requestLocal[T](req)
+			caller.Assign(func() {
+				cb(resp, err)
+			})
+		})
+		return
+	}
 	b := codec.Encode(req)
 	conc.Go(func() {
-		msg, err := nmq.Default().Conn.Request(rpcSubject(serverID), b, defaultTimeout)
-		if err != nil {
-			caller.Assign(func() {
-				cb(nil, err)
-			})
-			return
-		}
-		if errs := msg.Header.Values("err"); len(errs) > 0 {
-			caller.Assign(func() {
-				cb(nil, errors.New(errs[0]))
-			})
-			return
-		}
-		result, err := codec.Decode(msg.Data)
-		if err != nil {
-			caller.Assign(func() {
-				cb(nil, fmt.Errorf("RPCAsync response decode error: %v", err))
-			})
-			return
-		}
-		data, ok := conv.Pointer[T](result)
-		if !ok {
-			caller.Assign(func() {
-				cb(nil, fmt.Errorf("RPCAsync response type error: %v", utils.TypeName(result)))
-			})
-			return
-		}
+		resp, err := request[T](requestSubject(serverID), b)
 		caller.Assign(func() {
-			cb(data, nil)
+			cb(resp, err)
 		})
 	})
 }
 
-func RPC[T any](serverID uint32, req any) (*T, error) {
+func RequestAnyAsync[T any](caller iface.IModule, group string, req any, cb func(resp *T, err error)) {
 	b := codec.Encode(req)
-	msg, err := nmq.Default().Conn.Request(rpcSubject(serverID), b, defaultTimeout)
+	conc.Go(func() {
+		resp, err := request[T](requestAnySubject(group), b)
+		caller.Assign(func() {
+			cb(resp, err)
+		})
+	})
+}
+
+func RequestAny[T any](group string, req any) (*T, error) {
+	b := codec.Encode(req)
+	return request[T](requestAnySubject(group), b)
+}
+
+func request[T any](subject string, b []byte) (*T, error) {
+	msg, err := nmq.Default().Conn.Request(subject, b, defaultTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -152,103 +151,24 @@ func RPC[T any](serverID uint32, req any) (*T, error) {
 	}
 	result, err := codec.Decode(msg.Data)
 	if err != nil {
-		return nil, fmt.Errorf("RPC response decode error: %v", err)
+		return nil, fmt.Errorf("request response decode error: %v", err)
 	}
 	data, ok := conv.Pointer[T](result)
 	if !ok {
-		return nil, fmt.Errorf("RPC response type error: %v", utils.TypeName(result))
+		return nil, fmt.Errorf("request response type error: %v", utils.TypeName(result))
 	}
 	return data, err
 }
 
-func AnyRPCAsync[T any](caller iface.IModule, group string, req any, cb func(resp *T, err error)) {
-	b := codec.Encode(req)
-	conc.Go(func() {
-		msg, err := nmq.Default().Conn.Request(anyRPCSubject(group), b, defaultTimeout)
-		if err != nil {
-			caller.Assign(func() {
-				cb(nil, err)
-			})
-			return
-		}
-		if errs := msg.Header.Values("err"); len(errs) > 0 {
-			caller.Assign(func() {
-				cb(nil, errors.New(errs[0]))
-			})
-			return
-		}
-		result, err := codec.Decode(msg.Data)
-		if err != nil {
-			caller.Assign(func() {
-				cb(nil, fmt.Errorf("AnyRPCAsync response decode error: %v", err))
-			})
-			return
-		}
-		data, ok := conv.Pointer[T](result)
-		if !ok {
-			caller.Assign(func() {
-				cb(nil, fmt.Errorf("AnyRPCAsync response type error: %v", utils.TypeName(result)))
-			})
-			return
-		}
-		caller.Assign(func() {
-			cb(data, nil)
-		})
-	})
-}
-
-func AnyRPC[T any](group string, req any) (*T, error) {
-	b := codec.Encode(req)
-	msg, err := nmq.Default().Conn.Request(anyRPCSubject(group), b, defaultTimeout)
-	if err != nil {
-		return nil, err
-	}
-	if errs := msg.Header.Values("err"); len(errs) > 0 {
-		return nil, errors.New(errs[0])
-	}
-	result, err := codec.Decode(msg.Data)
-	if err != nil {
-		return nil, fmt.Errorf("RPC response decode error: %v", err)
-	}
-	data, ok := conv.Pointer[T](result)
-	if !ok {
-		return nil, fmt.Errorf("RPC response type error: %v", utils.TypeName(result))
-	}
-	return data, err
-}
-
-func LPC[T any](req any) (*T, error) {
-	ctx := newRPCContext(req)
-	data, err := ctx.exec()
+func requestLocal[T any](req any) (*T, error) {
+	ctx := newReqCtx(req)
+	data, err := ctx.do()
 	if err != nil {
 		return nil, err
 	}
 	result, ok := conv.Pointer[T](data)
 	if !ok {
-		return nil, fmt.Errorf("LPC response type error: %v", utils.TypeName(ctx.resp))
+		return nil, fmt.Errorf("RequestLocal response type error: %v", utils.TypeName(ctx.resp))
 	}
 	return result, err
-}
-
-func LPCAsync[T any](caller iface.IModule, req any, cb func(resp *T, err error)) {
-	ctx := newRPCContext(req)
-	conc.Go(func() {
-		data, err := ctx.exec()
-		if err != nil {
-			caller.Assign(func() {
-				cb(nil, err)
-			})
-			return
-		}
-		result, ok := conv.Pointer[T](data)
-		if !ok {
-			caller.Assign(func() {
-				cb(nil, fmt.Errorf("LPCAsync response type error: %v", utils.TypeName(ctx.resp)))
-			})
-			return
-		}
-		caller.Assign(func() {
-			cb(result, nil)
-		})
-	})
 }

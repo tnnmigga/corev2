@@ -72,7 +72,7 @@ func subscribeMsg() error {
 		return err
 	}
 	msgSubscriptions = append(msgSubscriptions, sub)
-	sub, err = nmq.Default().Subscribe(rpcSubject(conf.ServerID), handleRPCMsg)
+	sub, err = nmq.Default().Subscribe(requestSubject(conf.ServerID), handleRequestMsg)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func subscribeMsg() error {
 			return err
 		}
 		msgSubscriptions = append(msgSubscriptions, sub)
-		sub, err = nmq.Default().Subscribe(anyRPCSubject(group), handleRPCMsg)
+		sub, err = nmq.Default().Subscribe(requestAnySubject(group), handleRequestMsg)
 		if err != nil {
 			return err
 		}
@@ -107,7 +107,7 @@ func handleCastMsg(msg *nats.Msg) {
 	Delivery(data)
 }
 
-func handleRPCMsg(msg *nats.Msg) {
+func handleRequestMsg(msg *nats.Msg) {
 	b := msg.Data
 	req, err := codec.Decode(b)
 	if err != nil {
@@ -115,8 +115,8 @@ func handleRPCMsg(msg *nats.Msg) {
 		return
 	}
 	conc.Go(func() {
-		ctx := newRPCContext(req)
-		data, err := ctx.exec()
+		ctx := newReqCtx(req)
+		data, err := ctx.do()
 		var (
 			header nats.Header
 			b      []byte
