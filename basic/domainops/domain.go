@@ -2,12 +2,12 @@ package domainops
 
 import "github.com/tnnmigga/corev2/iface"
 
-type Root interface {
+type IRoot interface {
 	PutCase(index int, useCase any)
 	GetCase(index int) any
 }
 
-func RegisterCase[I any](root Root, index int, useCase I) {
+func Register[I any](root IRoot, index int, useCase I) {
 	root.PutCase(index, useCase)
 }
 
@@ -16,7 +16,7 @@ type root struct {
 	cases []any
 }
 
-func New(m iface.IModule, maxCaseIndex int) Root {
+func New(m iface.IModule, maxCaseIndex int) IRoot {
 	return &root{
 		IModule: m,
 		cases:   make([]any, maxCaseIndex),
