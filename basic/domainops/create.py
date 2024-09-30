@@ -40,7 +40,7 @@ def genUseCase():
         uc = &useCase{
             Domain: d,
         }
-        domainops.RegisterCase[api.I%s](d, domain.%sIndex, uc)
+        domainops.Register[api.I%s](d, domain.%sIndex, uc)
     }
 
     ''' % (name.lower(), name, name)
