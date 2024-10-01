@@ -10,8 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/tnnmigga/corev2/conc"
 	"github.com/tnnmigga/corev2/log"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 )
 
 type HttpService struct {
@@ -25,7 +23,7 @@ func NewHttpService() *HttpService {
 	h := &HttpService{
 		Engine: r,
 		svr: &http.Server{
-			Handler: h2c.NewHandler(r, &http2.Server{}),
+			Handler: r,
 		},
 	}
 	r.Use(h.Recover)
