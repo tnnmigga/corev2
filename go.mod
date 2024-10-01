@@ -1,6 +1,6 @@
 module github.com/tnnmigga/corev2
 
-go 1.22.4
+go 1.23.1
 
 require (
 	github.com/gin-gonic/gin v1.1.4
