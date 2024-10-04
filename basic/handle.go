@@ -12,7 +12,7 @@ import (
 type handle struct {
 	name      string
 	handleFns map[reflect.Type]func(any)
-	respFns   map[reflect.Type](func(iface.IReqCtx))
+	respFns   map[reflect.Type](func(iface.IRequestCtx))
 }
 
 func (m *handle) Name() string {
@@ -26,7 +26,7 @@ func (m *handle) Handle(mType reflect.Type, h func(any)) {
 	m.handleFns[mType] = h
 }
 
-func (m *handle) Response(mType reflect.Type, h func(iface.IReqCtx)) {
+func (m *handle) Response(mType reflect.Type, h func(iface.IRequestCtx)) {
 	if _, ok := m.respFns[mType]; ok {
 		panic(fmt.Errorf("duplicate registration %s", mType.String()))
 	}
@@ -38,8 +38,8 @@ func (m *handle) dispatch(msg any) {
 	switch req := msg.(type) {
 	case func():
 		req()
-	case iface.IReqCtx:
-		body := req.ReqBody()
+	case iface.IRequestCtx:
+		body := req.Body()
 		mType := reflect.TypeOf(body)
 		h, ok := m.respFns[mType]
 		if ok {

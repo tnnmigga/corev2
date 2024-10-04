@@ -25,7 +25,7 @@ func NewEventLoop(name string, mqLen int) iface.IModule {
 		handle: handle{
 			name:      name,
 			handleFns: map[reflect.Type]func(any){},
-			respFns:   map[reflect.Type]func(iface.IReqCtx){},
+			respFns:   map[reflect.Type]func(iface.IRequestCtx){},
 		},
 	}
 	m.wg.Add(1)
@@ -68,7 +68,7 @@ func NewConcurrency(name string) iface.IModule {
 		handle: handle{
 			name:      name,
 			handleFns: map[reflect.Type]func(any){},
-			respFns:   map[reflect.Type]func(iface.IReqCtx){},
+			respFns:   map[reflect.Type]func(iface.IRequestCtx){},
 		},
 	}
 	return m
@@ -108,7 +108,7 @@ func NewGoPool(name string, mqLen int, goNum int) iface.IModule {
 		handle: handle{
 			name:      name,
 			handleFns: map[reflect.Type]func(any){},
-			respFns:   map[reflect.Type]func(iface.IReqCtx){},
+			respFns:   map[reflect.Type]func(iface.IRequestCtx){},
 		},
 	}
 	for i := 0; i < goNum; i++ {

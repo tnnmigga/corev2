@@ -8,15 +8,15 @@ import (
 type IModule interface {
 	Name() string
 	Handle(mType reflect.Type, h func(any))
-	Response(mType reflect.Type, h func(IReqCtx))
+	Response(mType reflect.Type, h func(IRequestCtx))
 	Assign(any)
 	Run() error
 	Exit() error
 	Done() bool
 }
 
-type IReqCtx interface {
+type IRequestCtx interface {
 	context.Context
-	ReqBody() any
+	Body() any
 	Return(any, error)
 }

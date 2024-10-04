@@ -64,7 +64,7 @@ func newReqCtx(req any) *ReqCtx {
 	return ctx
 }
 
-func (ctx *ReqCtx) ReqBody() any {
+func (ctx *ReqCtx) Body() any {
 	return ctx.req
 }
 
@@ -75,9 +75,9 @@ func (ctx *ReqCtx) Return(resp any, err error) {
 }
 
 func (ctx *ReqCtx) do() (any, error) {
-	subs, ok := subMap[reflect.TypeOf(ctx.ReqBody())]
+	subs, ok := subMap[reflect.TypeOf(ctx.Body())]
 	if !ok {
-		return nil, fmt.Errorf("callee not fuound %v", utils.TypeName(ctx.ReqBody()))
+		return nil, fmt.Errorf("callee not fuound %v", utils.TypeName(ctx.Body()))
 	}
 	subs[0].Assign(ctx)
 	<-ctx.Done()

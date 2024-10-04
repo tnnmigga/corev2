@@ -27,13 +27,15 @@ func Handle[T any](m iface.IModule, h func(*T)) {
 	})
 }
 
-func Response[T any](m iface.IModule, h func(req *T, resp func(any, error))) {
-	codec.Register[T]()
-	mType := reflect.TypeOf(new(T))
-	subscribe[T](m)
-	m.Response(mType, func(req iface.IReqCtx) {
-		body := req.ReqBody()
-		h(body.(*T), req.Return)
+func Response[T1 any, T2 any](m iface.IModule, h func(body *T1, response func(*T2, error))) {
+	codec.Register[T1]()
+	mType := reflect.TypeOf(new(T1))
+	subscribe[T1](m)
+	m.Response(mType, func(ctx iface.IRequestCtx) {
+		body := ctx.Body()
+		h(body.(*T1), func(response *T2, err error) {
+			ctx.Return(response, err)
+		})
 	})
 }
 
