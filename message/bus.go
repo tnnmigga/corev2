@@ -2,7 +2,7 @@ package message
 
 import (
 	"errors"
-	fmt "fmt"
+	"fmt"
 	"reflect"
 
 	"github.com/mohae/deepcopy"
