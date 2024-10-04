@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"runtime"
 	"sync"
 	"syscall"
 	"time"
@@ -43,8 +44,8 @@ func WaitGoExit() {
 	case <-c:
 		return
 	case <-timer:
-		// PrintCurrentGo()
-		log.Errorf("wait goroutine exit timeout")
+		PrintCurrentGo()
+		log.Error("wait goroutine exit timeout")
 	}
 }
 
@@ -59,4 +60,10 @@ func Exit() {
 	case sign <- syscall.SIGQUIT:
 	default:
 	}
+}
+
+func PrintCurrentGo() {
+	buf := make([]byte, 1<<16)
+	stackLen := runtime.Stack(buf, true)
+	log.Warnf("%s", string(buf[:stackLen]))
 }
