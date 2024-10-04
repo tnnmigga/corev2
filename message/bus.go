@@ -90,7 +90,7 @@ func Broadcast(group string, msg any) error {
 }
 
 // 随机投递到一个分组下的某个进程
-func Anycast(group string, msg any) error {
+func CastAny(group string, msg any) error {
 	b := codec.Encode(msg)
 	err := nmq.Default().Publish(anycastSubject(group), b)
 	if err != nil {
