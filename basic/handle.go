@@ -5,18 +5,16 @@ import (
 	"reflect"
 
 	"github.com/tnnmigga/corev2/iface"
-	"github.com/tnnmigga/corev2/log"
 	"github.com/tnnmigga/corev2/utils"
 )
 
 type handle struct {
-	name      string
 	handleFns map[reflect.Type]func(any)
 	respFns   map[reflect.Type](func(iface.IRequestCtx))
 }
 
 func (m *handle) Name() string {
-	return m.name
+	return "unknown"
 }
 
 func (m *handle) Handle(mType reflect.Type, h func(any)) {
@@ -41,20 +39,12 @@ func (m *handle) dispatch(msg any) {
 	case iface.IRequestCtx:
 		body := req.Body()
 		mType := reflect.TypeOf(body)
-		h, ok := m.respFns[mType]
-		if ok {
-			h(req)
-			return
-		}
-		log.Errorf("module %s request not found %s", m.name, mType.String())
+		h := m.respFns[mType]
+		h(req)
 	default:
 		mType := reflect.TypeOf(msg)
-		h, ok := m.handleFns[mType]
-		if ok {
-			h(msg)
-			return
-		}
-		log.Errorf("module %s handle not found %s", m.name, mType.String())
+		h := m.handleFns[mType]
+		h(msg)
 	}
 }
 
