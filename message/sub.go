@@ -115,7 +115,7 @@ func handleRequestMsg(msg *nats.Msg) {
 		return
 	}
 	conc.Go(func() {
-		ctx := newReqCtx(req)
+		ctx := newRequestCtx(req)
 		data, err := ctx.do()
 		var (
 			header nats.Header

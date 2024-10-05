@@ -48,7 +48,7 @@ func requestAnySubject(group string) string {
 	return fmt.Sprintf("requestany.%s", group)
 }
 
-type ReqCtx struct {
+type RequestCtx struct {
 	context.Context
 	cancel func()
 	req    any
@@ -56,25 +56,25 @@ type ReqCtx struct {
 	err    error
 }
 
-func newReqCtx(req any) *ReqCtx {
-	ctx := &ReqCtx{
+func newRequestCtx(req any) *RequestCtx {
+	ctx := &RequestCtx{
 		req: deepcopy.Copy(req),
 	}
 	ctx.Context, ctx.cancel = context.WithTimeout(context.Background(), defaultTimeout)
 	return ctx
 }
 
-func (ctx *ReqCtx) Body() any {
+func (ctx *RequestCtx) Body() any {
 	return ctx.req
 }
 
-func (ctx *ReqCtx) Return(resp any, err error) {
+func (ctx *RequestCtx) Return(resp any, err error) {
 	ctx.resp = resp
 	ctx.err = err
 	ctx.cancel()
 }
 
-func (ctx *ReqCtx) do() (any, error) {
+func (ctx *RequestCtx) do() (any, error) {
 	subs, ok := subMap[reflect.TypeOf(ctx.Body())]
 	if !ok {
 		return nil, fmt.Errorf("callee not fuound %v", utils.TypeName(ctx.Body()))

@@ -163,7 +163,7 @@ func request[T any](subject string, b []byte) (*T, error) {
 }
 
 func requestLocal[T any](req any) (*T, error) {
-	ctx := newReqCtx(req)
+	ctx := newRequestCtx(req)
 	data, err := ctx.do()
 	if err != nil {
 		return nil, err
