@@ -2,8 +2,10 @@ package message
 
 import (
 	"context"
-	fmt "fmt"
+	"fmt"
+	"log"
 	"reflect"
+	"sync/atomic"
 	"time"
 
 	"github.com/mohae/deepcopy"
@@ -36,8 +38,8 @@ func broadcastSubject(group string) string {
 	return fmt.Sprintf("broadcast.%s", group)
 }
 
-func anycastSubject(group string) string {
-	return fmt.Sprintf("anycast.%s", group)
+func castAnySubject(group string) string {
+	return fmt.Sprintf("castany.%s", group)
 }
 
 func requestSubject(serverID uint32) string {
@@ -50,6 +52,7 @@ func requestAnySubject(group string) string {
 
 type RequestCtx struct {
 	context.Context
+	flag   int32
 	cancel func()
 	req    any
 	resp   any
@@ -69,6 +72,9 @@ func (ctx *RequestCtx) Body() any {
 }
 
 func (ctx *RequestCtx) Return(resp any, err error) {
+	if !atomic.CompareAndSwapInt32(&ctx.flag, 0, 1) {
+		log.Panicf("repeated return")
+	}
 	ctx.resp = resp
 	ctx.err = err
 	ctx.cancel()

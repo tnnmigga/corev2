@@ -83,7 +83,7 @@ func subscribeMsg() error {
 			return err
 		}
 		msgSubscriptions = append(msgSubscriptions, sub)
-		sub, err = nmq.Default().Subscribe(anycastSubject(group), handleCastMsg)
+		sub, err = nmq.Default().Subscribe(castAnySubject(group), handleCastMsg)
 		if err != nil {
 			return err
 		}
