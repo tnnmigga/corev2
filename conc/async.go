@@ -5,7 +5,7 @@ import (
 	"github.com/tnnmigga/corev2/utils"
 )
 
-func Async[T any](m iface.IModule, f func() (T, error), cb func(T, error), groupKey ...string) {
+func Async[T any](m iface.IModule, f func() (T, error), cb func(T, error), group ...string) {
 	fn := func() {
 		defer utils.RecoverPanic()
 		result, err := f()
@@ -13,9 +13,5 @@ func Async[T any](m iface.IModule, f func() (T, error), cb func(T, error), group
 			cb(result, err)
 		})
 	}
-	if len(groupKey) > 0 {
-		GoWithGroup(groupKey[0], fn)
-	} else {
-		Go(fn)
-	}
+	Go(fn, group...)
 }

@@ -77,18 +77,15 @@ func (w *worker) work() {
 	}
 }
 
-// 开启一个安全的协程
-func Go(fn func()) {
+func Go(fn func(), group ...string) {
+	if len(group) > 0 {
+		wkg.run(group[0], fn)
+		return
+	}
 	system.WaitAdd()
 	go func() {
 		defer utils.RecoverPanic()
 		defer system.WaitDone()
 		fn()
 	}()
-}
-
-// 规则同Go, 但是可以通过name参数对协程进行分组
-// 同分组下的任务会等候上一个执行完毕后再执行
-func GoWithGroup(name string, fn func()) {
-	wkg.run(name, fn)
 }
