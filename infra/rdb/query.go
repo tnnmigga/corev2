@@ -49,7 +49,6 @@ func (c conn) Cmd() *Cmd {
 type Pipeliner struct {
 	baseCmd
 	cmds [][]any
-	err  error
 }
 
 func (c *Cmd) Pipeline() *Pipeliner {
@@ -166,6 +165,7 @@ type baseCmd struct {
 	do      func(op string, args ...any)
 	process func()
 	result  []*redis.Cmd
+	err     error
 }
 
 func (c *baseCmd) Exec() *baseCmd {
@@ -184,8 +184,20 @@ func (c *baseCmd) Value() *redis.Cmd {
 	return c.result[0]
 }
 
-func (c *baseCmd) Values() []*redis.Cmd {
-	return c.result
+func (c *baseCmd) Values() ([]*redis.Cmd, error) {
+	return c.result, c.err
+}
+
+func (c *baseCmd) Error() error {
+	if c.err != nil {
+		return c.err
+	}
+	for _, cmd := range c.result {
+		if cmd.Err() != nil {
+			return cmd.Err()
+		}
+	}
+	return nil
 }
 
 func (c *baseCmd) SET(key string, value any, extargs ...any) *baseCmd {
