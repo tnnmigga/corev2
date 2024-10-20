@@ -1,11 +1,18 @@
 package rdb
 
 import (
-	"fmt"
-	"time"
+	"context"
 
-	"github.com/gomodule/redigo/redis"
+	"github.com/redis/go-redis/v9"
 	"github.com/tnnmigga/corev2/conf"
+)
+
+const (
+	RedisModeNormal      = "normal"
+	RedisModeReplication = "replication"
+	RedisModeSharding    = "sharding"
+
+	MaxActiveConns = 256
 )
 
 func init() {
@@ -18,49 +25,59 @@ func init() {
 	}
 }
 
-var dbs = map[string]*redis.Pool{}
+var conns = map[string]conn{}
 
 type config struct {
-	Pass  string
-	Host  string
-	Port  int
-	Index int
+	Addrs    []string
+	Password string
+	Index    int
+	Mode     string
+	Master   string
 }
 
 func initFromConf() error {
-	data := conf.Map[config]("natsmq", nil)
+	data := conf.Map[config]("rdb", nil)
 	for k, v := range data {
-		db, err := newPool(v)
+		db, err := newConn(v)
 		if err != nil {
 			return err
 		}
-		dbs[k] = db
+		conns[k] = db
 	}
 	return nil
 }
 
-func newPool(c config) (*redis.Pool, error) {
-	p := &redis.Pool{
-		MaxIdle:     150,
-		MaxActive:   100,
-		IdleTimeout: 30 * time.Second,
-		Wait:        true,
-		Dial: func() (redis.Conn, error) {
-			conn, err := redis.Dial("tcp", fmt.Sprintf("%s:%d", c.Host, c.Port), redis.DialPassword(c.Pass), redis.DialDatabase(c.Index))
-			if err != nil {
-				return nil, err
-			}
-			return conn, nil
-		},
+type IClient interface {
+	redis.Cmdable
+	Do(ctx context.Context, args ...interface{}) *redis.Cmd
+	Watch(ctx context.Context, fn func(*redis.Tx) error, keys ...string) error
+	Process(ctx context.Context, cmd redis.Cmder) error
+}
+
+func newConn(c config) (conn, error) {
+	var cli IClient
+	switch c.Mode {
+	case RedisModeNormal:
+		cli = redis.NewClient(&redis.Options{
+			Addr:     c.Addrs[0],
+			Password: c.Password,
+			DB:       c.Index,
+		})
+	case RedisModeReplication:
+		cli = redis.NewFailoverClient(&redis.FailoverOptions{
+			MasterName:     c.Master,
+			SentinelAddrs:  c.Addrs,
+			Password:       c.Password,
+			RouteByLatency: true,
+		})
+	case RedisModeSharding:
+		cli = redis.NewClusterClient(&redis.ClusterOptions{
+			Addrs:          c.Addrs,
+			Password:       c.Password,
+			RouteByLatency: true,
+		})
+	default:
+		panic("invalid mode")
 	}
-	conn := p.Get()
-	defer conn.Close()
-	r, err := redis.String(conn.Do("PING"))
-	if err != nil {
-		return nil, err
-	}
-	if r != "PONG" {
-		return nil, fmt.Errorf("redis %#v pong error %v", c, r)
-	}
-	return p, nil
+	return conn{cli: cli}, nil
 }
