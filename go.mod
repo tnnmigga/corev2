@@ -5,11 +5,11 @@ go 1.23.1
 require (
 	github.com/gin-gonic/gin v1.1.4
 	github.com/gogo/protobuf v1.3.2
-	github.com/gomodule/redigo v1.9.2
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 	github.com/nats-io/nats.go v1.37.0
 	github.com/procodr/monkey v0.0.0-20221102224215-28eb53c3a645
+	github.com/redis/go-redis/v9 v9.6.2
 	go.mongodb.org/mongo-driver v1.17.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
@@ -43,7 +43,6 @@ require (
 	github.com/paulmach/orb v0.11.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/redis/go-redis/v9 v9.6.2 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect

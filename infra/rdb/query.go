@@ -149,6 +149,11 @@ func (c *Cmd) Tx(do func(tx *Tx) error) *Tx {
 	return cmder
 }
 
+func (tx *Tx) Watch(keys ...string) *Tx {
+	tx.watch = keys
+	return tx
+}
+
 func (tx *Tx) Retry(count int, wait time.Duration) *Tx {
 	tx.retry = count
 	tx.wait = wait
