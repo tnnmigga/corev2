@@ -2,6 +2,7 @@ package rdb
 
 import (
 	"context"
+	"strings"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/tnnmigga/corev2/conf"
@@ -28,6 +29,7 @@ func init() {
 var conns = map[string]conn{}
 
 type config struct {
+	Addr     string
 	Addrs    []string
 	Password string
 	Index    int
@@ -38,6 +40,9 @@ type config struct {
 func initFromConf() error {
 	data := conf.Map[config]("rdb", nil)
 	for k, v := range data {
+		if len(v.Addr) > 0 {
+			v.Addrs = append(v.Addrs, strings.Split(v.Addr, ",")...)
+		}
 		db, err := newConn(v)
 		if err != nil {
 			return err

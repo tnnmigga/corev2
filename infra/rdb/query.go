@@ -29,6 +29,15 @@ func Use(name string) *Cmd {
 	return db.Cmd()
 }
 
+func (c conn) Cmd() *Cmd {
+	do := &Cmd{baseCmd: baseCmd{ctx: defaultCtx}}
+	do.do = func(op string, args ...any) {
+		do.result = []*redis.Cmd{redis.NewCmd(do.ctx, append([]any{op}, args...))}
+		_ = c.cli.Process(do.ctx, do.result[0])
+	}
+	return do
+}
+
 type Cmd struct {
 	baseCmd
 }
@@ -37,39 +46,30 @@ func (c *Cmd) Origin() IClient {
 	return c.cli
 }
 
-func (c conn) Cmd() *Cmd {
-	cmder := &Cmd{baseCmd: baseCmd{ctx: defaultCtx}}
-	cmder.do = func(op string, args ...any) {
-		cmder.result = []*redis.Cmd{redis.NewCmd(cmder.ctx, append([]any{op}, args...))}
-		_ = c.cli.Process(cmder.ctx, cmder.result[0])
-	}
-	return cmder
-}
-
 type Pipeliner struct {
 	baseCmd
 	cmds [][]any
 }
 
 func (c *Cmd) Pipeline() *Pipeliner {
-	cmder := &Pipeliner{baseCmd: c.baseCmd}
-	cmder.do = func(op string, args ...any) {
-		cmder.cmds = append(cmder.cmds, append([]any{op}, args...))
+	handle := &Pipeliner{baseCmd: c.baseCmd}
+	handle.do = func(op string, args ...any) {
+		handle.cmds = append(handle.cmds, append([]any{op}, args...))
 	}
-	cmder.process = func() {
+	handle.process = func() {
 		pipe := c.cli.Pipeline()
-		for _, cmd := range cmder.cmds {
-			pipe.Do(cmder.ctx, cmd...)
+		for _, cmd := range handle.cmds {
+			pipe.Do(handle.ctx, cmd...)
 		}
-		result, err := pipe.Exec(cmder.ctx)
+		result, err := pipe.Exec(handle.ctx)
 		if err != nil {
-			cmder.err = err
+			handle.err = err
 		}
 		for _, item := range result {
-			cmder.result = append(cmder.result, item.(*redis.Cmd))
+			handle.result = append(handle.result, item.(*redis.Cmd))
 		}
 	}
-	return cmder
+	return handle
 }
 
 type Mulit struct {
@@ -77,24 +77,24 @@ type Mulit struct {
 }
 
 func (c *Cmd) Multi() *Mulit {
-	cmder := &Mulit{Pipeliner: Pipeliner{baseCmd: c.baseCmd}}
-	cmder.do = func(op string, args ...any) {
-		cmder.cmds = append(cmder.cmds, append([]any{op}, args...))
+	handle := &Mulit{Pipeliner: Pipeliner{baseCmd: c.baseCmd}}
+	handle.do = func(op string, args ...any) {
+		handle.cmds = append(handle.cmds, append([]any{op}, args...))
 	}
-	cmder.process = func() {
+	handle.process = func() {
 		pipe := c.cli.TxPipeline()
-		for _, cmd := range cmder.cmds {
-			pipe.Do(cmder.ctx, cmd...)
+		for _, cmd := range handle.cmds {
+			pipe.Do(handle.ctx, cmd...)
 		}
-		result, err := pipe.Exec(cmder.ctx)
+		result, err := pipe.Exec(handle.ctx)
 		if err != nil {
-			cmder.err = err
+			handle.err = err
 		}
 		for _, item := range result {
-			cmder.result = append(cmder.result, item.(*redis.Cmd))
+			handle.result = append(handle.result, item.(*redis.Cmd))
 		}
 	}
-	return cmder
+	return handle
 }
 
 type Tx struct {
@@ -106,46 +106,46 @@ type Tx struct {
 }
 
 func (c *Cmd) Tx(do func(tx *Tx) error) *Tx {
-	cmder := &Tx{Pipeliner: Pipeliner{baseCmd: c.baseCmd}, txDo: do}
-	cmder.do = func(op string, args ...any) {
-		cmder.cmds = append(cmder.cmds, append([]any{op}, args...))
+	handle := &Tx{Pipeliner: Pipeliner{baseCmd: c.baseCmd}, txDo: do}
+	handle.do = func(op string, args ...any) {
+		handle.cmds = append(handle.cmds, append([]any{op}, args...))
 	}
-	cmder.process = func() {
+	handle.process = func() {
 		txf := func(tx *redis.Tx) error {
-			cmder.cmds = cmder.cmds[:0]
-			err := cmder.txDo(cmder)
+			handle.cmds = handle.cmds[:0]
+			err := handle.txDo(handle)
 			if err != nil {
 				return err
 			}
 			pipe := tx.TxPipeline()
-			for _, cmd := range cmder.cmds {
-				pipe.Do(cmder.ctx, cmd...)
+			for _, cmd := range handle.cmds {
+				pipe.Do(handle.ctx, cmd...)
 			}
-			result, err := pipe.Exec(cmder.ctx)
+			result, err := pipe.Exec(handle.ctx)
 			if err != nil {
 				return err
 			}
 			for _, item := range result {
-				cmder.result = append(cmder.result, item.(*redis.Cmd))
+				handle.result = append(handle.result, item.(*redis.Cmd))
 			}
 			return nil
 		}
 
-		for i := 0; i <= cmder.retry; i++ {
-			cmder.err = c.cli.Watch(cmder.ctx, txf, cmder.watch...)
-			if cmder.err == nil {
+		for i := 0; i <= handle.retry; i++ {
+			handle.err = c.cli.Watch(handle.ctx, txf, handle.watch...)
+			if handle.err == nil {
 				// Success.
 				return
 			}
-			if cmder.err != redis.TxFailedErr {
+			if handle.err != redis.TxFailedErr {
 				return
 			}
-			if cmder.wait == 0 {
-				time.Sleep(cmder.wait)
+			if handle.wait == 0 {
+				time.Sleep(handle.wait)
 			}
 		}
 	}
-	return cmder
+	return handle
 }
 
 func (tx *Tx) Watch(keys ...string) *Tx {
