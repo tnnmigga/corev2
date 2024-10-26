@@ -13,7 +13,6 @@ import (
 var lg *zap.SugaredLogger
 
 func init() {
-	// 先按默认值临时创建一个logger
 	Init()
 }
 

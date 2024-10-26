@@ -23,15 +23,15 @@ func (app *App) Append(mods ...iface.IModule) {
 }
 
 func (app *App) Launch() {
-	err := message.Start()
-	if err != nil {
-		panic(err)
-	}
 	for _, m := range app.modules {
-		err = m.Run()
+		err := m.Run()
 		if err != nil {
 			log.Panicf("Launch Run module %s error %v", m.Name(), err)
 		}
+	}
+	err := message.Start()
+	if err != nil {
+		log.Panic(err)
 	}
 	log.Infof("server %d launch success", conf.ServerID)
 }

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	RedisModeNormal      = "normal"
+	RedisModeNormal      = ""
 	RedisModeReplication = "replication"
 	RedisModeSharding    = "sharding"
 
