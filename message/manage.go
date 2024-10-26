@@ -16,6 +16,7 @@ func Start() error {
 
 func Stop() {
 	streamConsCtx.Drain()
+	<-streamConsCtx.Closed()
 	for _, sub := range msgSubscriptions {
 		err := sub.Drain()
 		if err != nil {

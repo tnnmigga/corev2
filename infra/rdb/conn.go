@@ -18,10 +18,6 @@ const (
 )
 
 func init() {
-	e := conf.Scan("rdb", &map[string]any{})
-	if e != nil {
-		return
-	}
 	if err := initFromConf(); err != nil {
 		log.Panic(err)
 	}

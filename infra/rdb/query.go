@@ -14,24 +14,24 @@ type conn struct {
 	cli IClient
 }
 
-func Default() *Cmd {
+func Default() *Command {
 	db, ok := conns["default"]
 	if !ok {
 		log.Panic("redis name not found")
 	}
-	return db.Cmd()
+	return db.cmd()
 }
 
-func Use(name string) *Cmd {
+func Use(name string) *Command {
 	db, ok := conns[name]
 	if !ok {
 		log.Panic("redis name not found")
 	}
-	return db.Cmd()
+	return db.cmd()
 }
 
-func (c conn) Cmd() *Cmd {
-	do := &Cmd{baseCmd: baseCmd{ctx: defaultCtx}}
+func (c conn) cmd() *Command {
+	do := &Command{baseCmd: baseCmd{ctx: defaultCtx}}
 	do.do = func(op string, args ...any) {
 		do.result = []*redis.Cmd{redis.NewCmd(do.ctx, append([]any{op}, args...))}
 		_ = c.cli.Process(do.ctx, do.result[0])
@@ -39,21 +39,21 @@ func (c conn) Cmd() *Cmd {
 	return do
 }
 
-type Cmd struct {
+type Command struct {
 	baseCmd
 }
 
-func (c *Cmd) Origin() IClient {
+func (c *Command) Origin() IClient {
 	return c.cli
 }
 
-type Pipeliner struct {
+type Pipeline struct {
 	baseCmd
 	cmds [][]any
 }
 
-func (c *Cmd) Pipeline() *Pipeliner {
-	handle := &Pipeliner{baseCmd: c.baseCmd}
+func (c *Command) Pipeline() *Pipeline {
+	handle := &Pipeline{baseCmd: c.baseCmd}
 	handle.do = func(op string, args ...any) {
 		handle.cmds = append(handle.cmds, append([]any{op}, args...))
 	}
@@ -74,11 +74,11 @@ func (c *Cmd) Pipeline() *Pipeliner {
 }
 
 type Mulit struct {
-	Pipeliner
+	Pipeline
 }
 
-func (c *Cmd) Multi() *Mulit {
-	handle := &Mulit{Pipeliner: Pipeliner{baseCmd: c.baseCmd}}
+func (c *Command) Multi() *Mulit {
+	handle := &Mulit{Pipeline: Pipeline{baseCmd: c.baseCmd}}
 	handle.do = func(op string, args ...any) {
 		handle.cmds = append(handle.cmds, append([]any{op}, args...))
 	}
@@ -99,15 +99,15 @@ func (c *Cmd) Multi() *Mulit {
 }
 
 type Tx struct {
-	Pipeliner
+	Pipeline
 	watch []string
 	txDo  func(*Tx) error
 	retry int
 	wait  time.Duration
 }
 
-func (c *Cmd) Tx(do func(tx *Tx) error) *Tx {
-	handle := &Tx{Pipeliner: Pipeliner{baseCmd: c.baseCmd}, txDo: do}
+func (c *Command) Tx(do func(tx *Tx) error) *Tx {
+	handle := &Tx{Pipeline: Pipeline{baseCmd: c.baseCmd}, txDo: do}
 	handle.do = func(op string, args ...any) {
 		handle.cmds = append(handle.cmds, append([]any{op}, args...))
 	}
@@ -169,23 +169,22 @@ type baseCmd struct {
 	err     error
 }
 
-func (c *baseCmd) Exec() *baseCmd {
-	if c.process != nil {
-		c.process()
-	}
-	return c
-}
-
 func (c *baseCmd) WithContext(ctx context.Context) *baseCmd {
 	c.ctx = ctx
 	return c
 }
 
 func (c *baseCmd) Value() *redis.Cmd {
+	if c.process != nil {
+		c.process()
+	}
 	return c.result[0]
 }
 
 func (c *baseCmd) Values() ([]*redis.Cmd, error) {
+	if c.process != nil {
+		c.process()
+	}
 	return c.result, c.err
 }
 
