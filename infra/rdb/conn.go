@@ -6,6 +6,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/tnnmigga/corev2/conf"
+	"github.com/tnnmigga/corev2/log"
 )
 
 const (
@@ -22,7 +23,7 @@ func init() {
 		return
 	}
 	if err := initFromConf(); err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 }
 
@@ -82,7 +83,7 @@ func newConn(c config) (conn, error) {
 			RouteByLatency: true,
 		})
 	default:
-		panic("invalid mode")
+		log.Panic("invalid mode")
 	}
 	return conn{cli: cli}, nil
 }

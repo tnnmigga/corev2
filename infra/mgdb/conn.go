@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/tnnmigga/corev2/conf"
+	"github.com/tnnmigga/corev2/log"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -13,7 +14,7 @@ import (
 
 func init() {
 	if err := initFromConf(); err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 }
 
@@ -44,7 +45,7 @@ func initFromConf() error {
 	for k, v := range data {
 		conn, err := newConn(v)
 		if err != nil {
-			panic(err)
+			log.Panic(err)
 		}
 		conns[k] = conn
 	}

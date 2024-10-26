@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"regexp"
 	"slices"
@@ -30,13 +29,11 @@ func init() {
 func loadLocalFile(fname string) []byte {
 	file, err := os.OpenFile(fname, os.O_RDONLY, 0)
 	if err != nil {
-		log.Println(err)
-		return nil
+		panic(err)
 	}
 	b, err := io.ReadAll(file)
 	if err != nil {
-		log.Println(err)
-		return nil
+		panic(err)
 	}
 	return b
 }

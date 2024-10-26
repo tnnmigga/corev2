@@ -4,13 +4,14 @@ import (
 	"fmt"
 
 	"github.com/tnnmigga/corev2/conf"
+	"github.com/tnnmigga/corev2/log"
 	"gorm.io/driver/clickhouse"
 	"gorm.io/gorm"
 )
 
 func init() {
 	if err := initFromConf(); err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 }
 
@@ -33,7 +34,7 @@ func initFromConf() error {
 	for k, v := range data {
 		conn, err := newConn(v)
 		if err != nil {
-			panic(err)
+			log.Panic(err)
 		}
 		conns[k] = conn
 	}

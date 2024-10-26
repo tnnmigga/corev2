@@ -12,7 +12,7 @@ import (
 
 func init() {
 	if err := initFromConf(); err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 }
 
@@ -50,7 +50,7 @@ func initFromConf() error {
 	for k, v := range data {
 		conn, err := newConn(v)
 		if err != nil {
-			panic(err)
+			log.Panic(err)
 		}
 		dbs[k] = conn
 	}

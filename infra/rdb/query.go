@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/tnnmigga/corev2/log"
 )
 
 var defaultCtx = context.Background()
@@ -16,7 +17,7 @@ type conn struct {
 func Default() *Cmd {
 	db, ok := conns["default"]
 	if !ok {
-		panic("redis name not found")
+		log.Panic("redis name not found")
 	}
 	return db.Cmd()
 }
@@ -24,7 +25,7 @@ func Default() *Cmd {
 func Use(name string) *Cmd {
 	db, ok := conns[name]
 	if !ok {
-		panic("redis name not found")
+		log.Panic("redis name not found")
 	}
 	return db.Cmd()
 }

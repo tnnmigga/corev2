@@ -50,7 +50,7 @@ func Register[T any]() {
 	}
 	mType := reflect.TypeOf(msg)
 	if mType.Kind() == reflect.Ptr {
-		panic("codec T must be a struct")
+		log.Panic("codec T must be a struct")
 	}
 	msgIDToDesc[msgID] = &MessageDescriptor{
 		MessageName: msgName,

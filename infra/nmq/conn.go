@@ -11,7 +11,7 @@ import (
 
 func init() {
 	if err := initFromConf(); err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 }
 
@@ -35,7 +35,7 @@ func initFromConf() error {
 	for key, item := range data {
 		conn, err := newConn(item)
 		if err != nil {
-			panic(err)
+			log.Panic(err)
 		}
 		conns[key] = conn
 	}

@@ -1,7 +1,7 @@
 package basic
 
 import (
-	"fmt"
+	"log"
 	"reflect"
 
 	"github.com/tnnmigga/corev2/iface"
@@ -19,14 +19,14 @@ func (m *handle) Name() string {
 
 func (m *handle) Handle(mType reflect.Type, h func(any)) {
 	if _, ok := m.handleFns[mType]; ok {
-		panic(fmt.Errorf("duplicate registration %s", mType.String()))
+		log.Panicf("duplicate registration %s", mType.String())
 	}
 	m.handleFns[mType] = h
 }
 
 func (m *handle) Response(mType reflect.Type, h func(iface.IRequestCtx)) {
 	if _, ok := m.respFns[mType]; ok {
-		panic(fmt.Errorf("duplicate registration %s", mType.String()))
+		log.Panicf("duplicate registration %s", mType.String())
 	}
 	m.respFns[mType] = h
 }
