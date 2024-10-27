@@ -15,20 +15,20 @@ var (
 type subscriber[T iface.IEvent] struct {
 	name string
 	m    iface.IModule
-	cb   func(*T)
+	cb   func(T)
 }
 
 func (sub subscriber[T]) Name() string {
 	return sub.name
 }
 
-func (sub *subscriber[T]) Cb(e any) {
+func (sub *subscriber[T]) Cb(e iface.IEvent) {
 	sub.m.Assign(func() {
-		sub.cb(e.(*T))
+		sub.cb(e.(T))
 	})
 }
 
-func Subscribe[T iface.IEvent](m iface.IModule, cb func(*T), events ...string) {
+func Subscribe[T iface.IEvent](m iface.IModule, cb func(T), events ...string) {
 	Unsubscribe(cb)
 	if len(events) == 0 {
 		return
@@ -46,7 +46,7 @@ func Subscribe[T iface.IEvent](m iface.IModule, cb func(*T), events ...string) {
 	}
 }
 
-func Unsubscribe[T iface.IEvent](cb func(*T)) {
+func Unsubscribe[T iface.IEvent](cb func(T)) {
 	name := utils.FuncName(cb)
 	rw.Lock()
 	defer rw.Unlock()

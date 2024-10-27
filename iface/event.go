@@ -2,7 +2,7 @@ package iface
 
 type IEventSubscriber interface {
 	Name() string
-	Cb(any)
+	Cb(IEvent)
 }
 
 type IEvent interface {
