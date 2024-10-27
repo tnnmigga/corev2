@@ -72,8 +72,8 @@ func After(m iface.IModule, do any, delay time.Duration) uint64 {
 
 func Cancel(id uint64) bool {
 	mtx.Lock()
-	defer mtx.Unlock()
 	item := h.Remove(id)
+	mtx.Unlock()
 	return item.ID == id
 }
 
