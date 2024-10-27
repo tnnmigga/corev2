@@ -17,22 +17,22 @@ func init() {
 }
 
 var (
-	h   = heap.New[uint64, time.Duration, *Timer]()
+	h   = heap.New[uint64, time.Duration, *timer]()
 	mtx = sync.Mutex{}
 )
 
-type Timer struct {
-	Recv iface.IModule
-	ID   uint64
-	Do   any
-	at   time.Duration
+type timer struct {
+	m  iface.IModule
+	id uint64
+	do any
+	at time.Duration
 }
 
-func (t *Timer) Key() uint64 {
-	return t.ID
+func (t *timer) Key() uint64 {
+	return t.id
 }
 
-func (t *Timer) Value() time.Duration {
+func (t *timer) Value() time.Duration {
 	return t.at
 }
 
@@ -58,36 +58,29 @@ func tryTrigger() {
 			return
 		}
 		h.Pop()
-		item.Recv.Assign(item.Do)
+		item.m.Assign(item.do)
 	}
 }
 
 func After(m iface.IModule, do any, delay time.Duration) uint64 {
-	t := &Timer{ID: idgen.NewUUID(), Do: do, at: utils.NowNs()}
+	t := &timer{id: idgen.NewUUID(), do: do, at: utils.NowNs()}
 	mtx.Lock()
 	h.Push(t)
 	mtx.Unlock()
-	return t.ID
+	return t.id
 }
 
 func Cancel(id uint64) bool {
 	mtx.Lock()
 	item := h.Remove(id)
 	mtx.Unlock()
-	return item.ID == id
+	return item.id == id
 }
 
-func CancelByFilter(filter func(*Timer) bool) []*Timer {
+func CancelAll() []*timer {
 	mtx.Lock()
 	defer mtx.Unlock()
-	var items []*Timer
-	for _, item := range h.Items {
-		if filter(item) {
-			items = append(items, item)
-		}
-	}
-	for _, item := range items {
-		h.Remove(item.ID)
-	}
+	items := h.Items
+	h.Items = nil
 	return items
 }

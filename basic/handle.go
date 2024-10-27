@@ -9,12 +9,13 @@ import (
 )
 
 type handle struct {
+	name      string
 	handleFns map[reflect.Type]func(any)
 	respFns   map[reflect.Type](func(iface.IRequestCtx))
 }
 
 func (m *handle) Name() string {
-	return "unknown"
+	return m.name
 }
 
 func (m *handle) Handle(mType reflect.Type, h func(any)) {

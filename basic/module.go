@@ -21,10 +21,11 @@ type eventLoopModule struct {
 }
 
 // 单线程异步 事件循环
-func NewEventLoop(mqLen int) iface.IModule {
+func NewEventLoop(name string, mqLen int) iface.IModule {
 	m := &eventLoopModule{
 		mq: make(chan any, mqLen),
 		handle: handle{
+			name:      name,
 			handleFns: map[reflect.Type]func(any){},
 			respFns:   map[reflect.Type]func(iface.IRequestCtx){},
 		},
@@ -38,6 +39,7 @@ func NewEventLoop(mqLen int) iface.IModule {
 			m.pending.Add(-1)
 		}
 	})
+	Link.register(name, m)
 	return m
 }
 
@@ -64,13 +66,15 @@ type concurrencyModule struct {
 }
 
 // 每个请求一个goroutine执行
-func NewConcurrency() iface.IModule {
+func NewConcurrency(name string) iface.IModule {
 	m := &concurrencyModule{
 		handle: handle{
+			name:      name,
 			handleFns: map[reflect.Type]func(any){},
 			respFns:   map[reflect.Type]func(iface.IRequestCtx){},
 		},
 	}
+	Link.register(name, m)
 	return m
 }
 
@@ -98,10 +102,11 @@ type goroutinePoolModule struct {
 }
 
 // 线程池模式
-func NewGoPool(mqLen int, goNum int) iface.IModule {
+func NewGoPool(name string, mqLen int, goNum int) iface.IModule {
 	m := &goroutinePoolModule{
 		mq: make(chan any, mqLen),
 		handle: handle{
+			name:      name,
 			handleFns: map[reflect.Type]func(any){},
 			respFns:   map[reflect.Type]func(iface.IRequestCtx){},
 		},
@@ -117,6 +122,7 @@ func NewGoPool(mqLen int, goNum int) iface.IModule {
 			}
 		})
 	}
+	Link.register(name, m)
 	return m
 }
 
