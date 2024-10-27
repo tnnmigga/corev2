@@ -22,10 +22,10 @@ var (
 )
 
 type Timer struct {
-	ID uint64
-	M  iface.IModule
-	Do any
-	at time.Duration
+	Recv iface.IModule
+	ID   uint64
+	Do   any
+	at   time.Duration
 }
 
 func (t *Timer) Key() uint64 {
@@ -58,7 +58,7 @@ func tryTrigger() {
 			return
 		}
 		h.Pop()
-		item.M.Assign(item.Do)
+		item.Recv.Assign(item.Do)
 	}
 }
 
