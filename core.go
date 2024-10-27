@@ -3,6 +3,7 @@ package corev2
 import (
 	"time"
 
+	"github.com/tnnmigga/corev2/basic/events"
 	"github.com/tnnmigga/corev2/conf"
 	"github.com/tnnmigga/corev2/iface"
 	"github.com/tnnmigga/corev2/log"
@@ -33,11 +34,13 @@ func (app *App) Launch() {
 	if err != nil {
 		log.Panic(err)
 	}
+	events.Publish(events.SystemAfterRun)
 	log.Infof("server %d launch success", conf.ServerID)
 }
 
 func (app *App) Shutdown() {
 	message.Stop()
+	events.Publish(events.SystemBeforeStop)
 	app.waitMsgHandle()
 	for i := len(app.modules) - 1; i >= 0; i-- {
 		err := app.modules[i].Exit()

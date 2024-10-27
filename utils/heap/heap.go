@@ -9,8 +9,8 @@ type heapItem[K comparable, V constraints.Ordered] interface {
 	Value() V
 }
 
-func New[K comparable, V constraints.Ordered]() *Heap[K, V, heapItem[K, V]] {
-	return &Heap[K, V, heapItem[K, V]]{}
+func New[K comparable, V constraints.Ordered, T heapItem[K, V]]() *Heap[K, V, T] {
+	return &Heap[K, V, T]{}
 }
 
 // 小顶堆
