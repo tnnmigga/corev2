@@ -18,17 +18,17 @@ func init() {
 
 func Init() {
 	var logLevel zap.AtomicLevel
-	err := logLevel.UnmarshalText([]byte(conf.String("log.level", "debug")))
+	err := logLevel.UnmarshalText([]byte(conf.Str("log.level", "debug")))
 	if err != nil {
 		panic(fmt.Errorf("log Init level error: %v", err))
 	}
 	conf := zap.Config{
 		Level:             logLevel,
 		Development:       false,
-		Encoding:          conf.String("log.encoding", "console"),
+		Encoding:          conf.Str("log.encoding", "console"),
 		EncoderConfig:     zap.NewProductionEncoderConfig(),
-		OutputPaths:       []string{conf.String("log.stdout", "stdout")},
-		ErrorOutputPaths:  []string{conf.String("log.stderr", "stderr")},
+		OutputPaths:       []string{conf.Str("log.stdout", "stdout")},
+		ErrorOutputPaths:  []string{conf.Str("log.stderr", "stderr")},
 		DisableCaller:     false,
 		DisableStacktrace: true,
 	}

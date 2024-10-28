@@ -1,28 +1,20 @@
 package conf
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
-	"regexp"
 	"slices"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
+	"golang.org/x/exp/constraints"
+	"gopkg.in/yaml.v3"
 )
 
 func init() {
-	fname := "configs.jsonc"
-	if idx := slices.Index(os.Args, "-c"); idx != -1 {
-		fname = os.Args[idx+1]
-	}
-	b := loadLocalFile(fname)
-	if b == nil {
-		return
-	}
-	initFromJSON(b)
+	initFromYML()
 	mustInit()
 }
 
@@ -44,22 +36,41 @@ var (
 
 var ErrConfigNotFound error = errors.New("configs not found")
 
-func initFromJSON(b []byte) {
-	b = uncomment(b)
-	err := json.Unmarshal(b, &confs)
+func initFromYML() {
+	fname := "configs.yaml"
+	if idx := slices.Index(os.Args, "-c"); idx != -1 {
+		fname = os.Args[idx+1]
+	}
+	b := loadLocalFile(fname)
+	if b == nil {
+		return
+	}
+	err := yaml.Unmarshal(b, &confs)
 	if err != nil {
 		panic(fmt.Errorf("LoadFromJSON unmarshal error %v", err))
 	}
 }
 
-func uncomment(b []byte) []byte {
-	reg := regexp.MustCompile(`/\*{1,2}[\s\S]*?\*/`)
-	b = reg.ReplaceAll(b, []byte("\n"))
-	reg = regexp.MustCompile(`\s//[\s\S]*?\n`)
-	return reg.ReplaceAll(b, []byte("\n"))
-}
+// func initFromJSONC() {
+// 	fname := "configs.jsonc"
+// 	if idx := slices.Index(os.Args, "-c"); idx != -1 {
+// 		fname = os.Args[idx+1]
+// 	}
+// 	b := loadLocalFile(fname)
+// 	if b == nil {
+// 		return
+// 	}
+// 	reg := regexp.MustCompile(`/\*{1,2}[\s\S]*?\*/`)
+// 	b = reg.ReplaceAll(b, []byte("\n"))
+// 	reg = regexp.MustCompile(`\s//[\s\S]*?\n`)
+// 	b = reg.ReplaceAll(b, []byte("\n"))
+// 	err := json.Unmarshal(b, &confs)
+// 	if err != nil {
+// 		panic(fmt.Errorf("LoadFromJSON unmarshal error %v", err))
+// 	}
+// }
 
-func Any[T any](name string) (v T, ok bool) {
+func Any(name string) (v any, ok bool) {
 	path := strings.Split(name, ".")
 	var next any = confs
 	for _, n := range path {
@@ -73,13 +84,20 @@ func Any[T any](name string) (v T, ok bool) {
 		}
 	}
 	// 类型错误触发panic中断
-	return next.(T), true
+	return next, true
 }
 
-func Int(name string, default_ ...int) int {
-	v, ok := Any[float64](name)
+func Num[T constraints.Integer | constraints.Float](name string, default_ ...T) T {
+	v, ok := Any(name)
 	if ok {
-		return int(v)
+		switch num := v.(type) {
+		case int:
+			return T(num)
+		case float64:
+			return T(num)
+		default:
+			panic("type error")
+		}
 	}
 	if len(default_) > 0 {
 		return default_[0]
@@ -87,65 +105,10 @@ func Int(name string, default_ ...int) int {
 	panic(ErrConfigNotFound)
 }
 
-func Int64(name string, default_ ...int64) int64 {
-	v, ok := Any[float64](name)
+func Str(name string, default_ ...string) string {
+	v, ok := Any(name)
 	if ok {
-		return int64(v)
-	}
-	if len(default_) > 0 {
-		return default_[0]
-	}
-	panic(ErrConfigNotFound)
-}
-
-func Int32(name string, default_ ...int32) int32 {
-	v, ok := Any[float64](name)
-	if ok {
-		return int32(v)
-	}
-	if len(default_) > 0 {
-		return default_[0]
-	}
-	panic(ErrConfigNotFound)
-}
-
-func Uint64(name string, default_ ...uint64) uint64 {
-	v, ok := Any[float64](name)
-	if ok {
-		return uint64(v)
-	}
-	if len(default_) > 0 {
-		return default_[0]
-	}
-	panic(ErrConfigNotFound)
-}
-
-func Uint32(name string, default_ ...uint32) uint32 {
-	v, ok := Any[float64](name)
-	if ok {
-		return uint32(v)
-	}
-	if len(default_) > 0 {
-		return default_[0]
-	}
-	panic(ErrConfigNotFound)
-}
-
-func String(name string, default_ ...string) string {
-	v, ok := Any[string](name)
-	if ok {
-		return string(v)
-	}
-	if len(default_) > 0 {
-		return default_[0]
-	}
-	panic(ErrConfigNotFound)
-}
-
-func Float64(name string, default_ ...float64) float64 {
-	v, ok := Any[float64](name)
-	if ok {
-		return v
+		return v.(string)
 	}
 	if len(default_) > 0 {
 		return default_[0]
@@ -154,9 +117,9 @@ func Float64(name string, default_ ...float64) float64 {
 }
 
 func Bool(name string, default_ ...bool) bool {
-	v, ok := Any[bool](name)
+	v, ok := Any(name)
 	if ok {
-		return v
+		return v.(bool)
 	}
 	if len(default_) > 0 {
 		return default_[0]
@@ -165,13 +128,16 @@ func Bool(name string, default_ ...bool) bool {
 }
 
 func List[T any](name string, default_ ...[]T) []T {
-	a, ok := Any[[]any](name)
+	a, ok := Any(name)
 	if ok {
-		ar := make([]T, len(a))
-		for i, v := range a {
-			ar[i] = v.(T)
+		v, ok := a.([]T)
+		if ok {
+			return v
 		}
-		return ar
+		var result []T
+		mapstructure.Decode(a, &result)
+		return result
+
 	}
 	if len(default_) > 0 {
 		return default_[0]
@@ -180,7 +146,7 @@ func List[T any](name string, default_ ...[]T) []T {
 }
 
 func Map[T any](name string, default_ ...map[string]T) map[string]T {
-	a, ok := Any[map[string]any](name)
+	a, ok := Any(name)
 	if ok {
 		var m map[string]T
 		err := mapstructure.Decode(a, &m)
@@ -196,7 +162,7 @@ func Map[T any](name string, default_ ...map[string]T) map[string]T {
 }
 
 func Scan(name string, v any) error {
-	a, ok := Any[any](name)
+	a, ok := Any(name)
 	if !ok {
 		return ErrConfigNotFound
 	}

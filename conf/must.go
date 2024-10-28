@@ -6,6 +6,6 @@ var (
 )
 
 func mustInit() {
-	ServerID = Uint32("must.serverID")
+	ServerID = Num[uint32]("must.serverID")
 	Groups = List[string]("must.groups")
 }
