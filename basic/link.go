@@ -11,20 +11,20 @@ type moduleLink struct {
 	modules map[string]iface.IModule
 }
 
-func (ms *moduleLink) regModule(m iface.IModule) {
+func (ml *moduleLink) regModule(m iface.IModule) {
 	name := m.Name()
-	if _, ok := ms.modules[name]; ok {
+	if _, ok := ml.modules[name]; ok {
 		log.Panicf("module %s exist", name)
 	}
-	ms.modules[name] = m
+	ml.modules[name] = m
 }
 
-func (ms *moduleLink) Get(name string) iface.IModule {
-	return ms.modules[name]
+func (ml *moduleLink) Get(name string) iface.IModule {
+	return ml.modules[name]
 }
 
-func (ms *moduleLink) Send(name string, msg any) {
-	if m, ok := ms.modules[name]; ok {
+func (ml *moduleLink) Send(name string, msg any) {
+	if m, ok := ml.modules[name]; ok {
 		m.Assign(msg)
 		return
 	}
