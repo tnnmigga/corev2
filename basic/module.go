@@ -39,7 +39,7 @@ func NewEventLoop(name string, mqLen int) iface.IModule {
 			m.pending.Add(-1)
 		}
 	})
-	Link.register(name, m)
+	Link.regModule(m)
 	return m
 }
 
@@ -74,7 +74,7 @@ func NewConcurrency(name string) iface.IModule {
 			respFns:   map[reflect.Type]func(iface.IRequestCtx){},
 		},
 	}
-	Link.register(name, m)
+	Link.regModule(m)
 	return m
 }
 
@@ -122,7 +122,7 @@ func NewGoPool(name string, mqLen int, goNum int) iface.IModule {
 			}
 		})
 	}
-	Link.register(name, m)
+	Link.regModule(m)
 	return m
 }
 

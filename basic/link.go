@@ -11,7 +11,8 @@ type moduleLink struct {
 	modules map[string]iface.IModule
 }
 
-func (ms *moduleLink) register(name string, m iface.IModule) {
+func (ms *moduleLink) regModule(m iface.IModule) {
+	name := m.Name()
 	if _, ok := ms.modules[name]; ok {
 		log.Panicf("module %s exist", name)
 	}
