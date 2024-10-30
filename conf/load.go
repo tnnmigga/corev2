@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	initFromYML()
+	initFromYAML()
 	mustInit()
 }
 
@@ -36,7 +36,7 @@ var (
 
 var ErrConfigNotFound error = errors.New("configs not found")
 
-func initFromYML() {
+func initFromYAML() {
 	fname := "configs.yaml"
 	if idx := slices.Index(os.Args, "-c"); idx != -1 {
 		fname = os.Args[idx+1]
