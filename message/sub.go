@@ -122,6 +122,7 @@ func handleRequestMsg(msg *nats.Msg) {
 			b      []byte
 		)
 		if err != nil {
+			header = nats.Header{}
 			header.Add("err", err.Error())
 		} else {
 			b = codec.Encode(data)
