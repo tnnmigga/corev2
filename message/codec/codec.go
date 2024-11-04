@@ -24,9 +24,9 @@ func init() {
 type MarshalBy byte
 
 const (
-	MarshalByGoGoProto MarshalBy = 1
-	MarshalByBSON      MarshalBy = 2
-	MarshalByJSON      MarshalBy = 4
+	MarshalByProto MarshalBy = 1
+	MarshalByBSON  MarshalBy = 2
+	MarshalByJSON  MarshalBy = 4
 )
 
 type MessageDescriptor struct {
@@ -88,7 +88,7 @@ func Decode(b []byte) (msg any, err error) {
 // 序列化
 func Marshal(mBy MarshalBy, v any) []byte {
 	switch mBy {
-	case MarshalByGoGoProto:
+	case MarshalByProto:
 		b, err := proto.Marshal(v.(proto.Message))
 		if err != nil {
 			log.Panic(fmt.Errorf("message encode error %v", err))
@@ -114,7 +114,7 @@ func Marshal(mBy MarshalBy, v any) []byte {
 // 反序列化
 func Unmarshal(mType MarshalBy, b []byte, addr any) error {
 	switch mType {
-	case MarshalByGoGoProto:
+	case MarshalByProto:
 		return proto.Unmarshal(b, addr.(proto.Message))
 	case MarshalByBSON:
 		return bson.Unmarshal(b, addr)
@@ -127,7 +127,7 @@ func Unmarshal(mType MarshalBy, b []byte, addr any) error {
 
 func marshalBy(v any) MarshalBy {
 	if _, ok := v.(proto.Message); ok {
-		return MarshalByGoGoProto
+		return MarshalByProto
 	}
 	return MarshalByBSON
 }
