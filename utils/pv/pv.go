@@ -4,8 +4,8 @@ import "golang.org/x/exp/constraints"
 
 // 信号量 PV操作
 type PV interface {
-	P()
-	V()
+	Wait()
+	Signal()
 }
 
 type h struct {
@@ -16,10 +16,10 @@ func New[N constraints.Integer](n int) PV {
 	return &h{count: make(chan struct{}, n)}
 }
 
-func (s *h) P() {
+func (s *h) Wait() {
 	s.count <- struct{}{}
 }
 
-func (s *h) V() {
+func (s *h) Signal() {
 	<-s.count
 }
