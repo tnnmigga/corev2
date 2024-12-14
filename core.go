@@ -25,6 +25,12 @@ func (app *App) Append(mods ...iface.IModule) {
 
 func (app *App) Launch() {
 	for _, m := range app.modules {
+		err := m.Init()
+		if err != nil {
+			log.Panicf("Launch Init module %s error %v", m.Name(), err)
+		}
+	}
+	for _, m := range app.modules {
 		err := m.Run()
 		if err != nil {
 			log.Panicf("Launch Run module %s error %v", m.Name(), err)

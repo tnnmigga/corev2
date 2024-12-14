@@ -49,6 +49,10 @@ func (m *handle) dispatch(msg any) {
 	}
 }
 
+func (m *handle) Init() error {
+	return nil
+}
+
 func (m *handle) Run() error {
 	return nil
 }

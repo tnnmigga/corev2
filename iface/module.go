@@ -10,6 +10,7 @@ type IModule interface {
 	Handle(mType reflect.Type, h func(any))
 	Response(mType reflect.Type, h func(IRequestCtx))
 	Assign(any)
+	Init() error
 	Run() error
 	Exit() error
 	Done() bool
