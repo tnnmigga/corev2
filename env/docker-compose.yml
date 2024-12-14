@@ -1,0 +1,58 @@
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: default
+
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    restart: always
+    ports:
+      - "8123:8123" # HTTP 接口
+      - "9000:9000" # Native TCP 接口
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+
+  mongo:
+    image: mongo:5.0
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:6.2
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+
+  nats:
+    image: nats:2.9
+    container_name: nats
+    restart: always
+    ports:
+      - "4222:4222"   # Client 接口
+      - "8222:8222"   # HTTP 监控接口
+    command: ["--jetstream", "--store_dir", "/data/jetstream"]
+    volumes:
+      - nats_data:/data
+
+volumes:
+  mysql_data:
+  clickhouse_data:
+  mongo_data:
+  nats_data:

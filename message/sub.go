@@ -77,18 +77,18 @@ func subscribeMsg() error {
 		return err
 	}
 	msgSubscriptions = append(msgSubscriptions, sub)
-	for _, group := range conf.Groups {
-		sub, err = nmq.Default().Subscribe(broadcastSubject(group), handleCastMsg)
+	for _, name := range conf.List[string]("modules") {
+		sub, err = nmq.Default().Subscribe(broadcastSubject(name), handleCastMsg)
 		if err != nil {
 			return err
 		}
 		msgSubscriptions = append(msgSubscriptions, sub)
-		sub, err = nmq.Default().Subscribe(castAnySubject(group), handleCastMsg)
+		sub, err = nmq.Default().Subscribe(castAnySubject(name), handleCastMsg)
 		if err != nil {
 			return err
 		}
 		msgSubscriptions = append(msgSubscriptions, sub)
-		sub, err = nmq.Default().Subscribe(requestAnySubject(group), handleRequestMsg)
+		sub, err = nmq.Default().Subscribe(requestAnySubject(name), handleRequestMsg)
 		if err != nil {
 			return err
 		}

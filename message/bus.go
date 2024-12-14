@@ -81,10 +81,10 @@ func Delivery(msg any) {
 	}
 }
 
-// 广播到一个分组下的所有进程
-func Broadcast(group string, msg any) error {
+// 广播到包含某个模块的所有进程
+func Broadcast(name string, msg any) error {
 	b := codec.Encode(msg)
-	err := nmq.Default().Publish(broadcastSubject(group), b)
+	err := nmq.Default().Publish(broadcastSubject(name), b)
 	if err != nil {
 		log.Error(err)
 	}

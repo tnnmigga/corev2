@@ -12,7 +12,8 @@ require (
 	github.com/redis/go-redis/v9 v9.6.2
 	go.mongodb.org/mongo-driver v1.17.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
+	golang.org/x/exp v0.0.0-20241210194714-1829a127f884
+	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/clickhouse v0.6.1
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.12
@@ -54,12 +55,11 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.27.0 // indirect
 	golang.org/x/net v0.29.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect
 	golang.org/x/text v0.18.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
